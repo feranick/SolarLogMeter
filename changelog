@@ -1,1 +1,5 @@
+Version 0.9.8 - 20111011: Temporary fix with issue about filename 
+(October date make SLM hang). The fix changes the names of the files for 
+individual cells from dates to SC.
+
 Version 0.9.7 - 20110930: First release on GitHub
