@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 0.9.8 - IV logging
+ v. 0.10 - PV IV logging 
  
  2011 - Nicola Ferralis - ferralis@mit.edu					  
  
@@ -103,7 +103,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "0.9.8 - 20111011";
+String versProg = "0.10 - 20111014";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -165,9 +165,9 @@ float Ri[] = {
   1.0, 1.0, 1.0, 1.0};     // resistor for current measurement A.
 
 float Ri1[] = {
- 1000.0, 1000.0, 1000.0, 1000.0};         //resistor for current amplification (fixed resistor 1K) 
+  1000.0, 1000.0, 1000.0, 1000.0};         //resistor for current amplification (fixed resistor 1K) 
 float Ri2[] = {
-  100000.0, 100000.0, 100000.0, 100000.0};     //resistor for current amplification (value of resistor determines the amplification factor) 
+  10000.0, 100000.0, 100000.0, 100000.0};     //resistor for current amplification (value of resistor determines the amplification factor) 
 
 float Vcv[]= {                            // Multiplication factor for the voltage divider (it's calculated during setup).
   0.0, 0.0, 0.0, 0.0}; 
@@ -187,7 +187,13 @@ const int multiIVPin = 35;     // the number of the pushbutton pin
 const int stopIVPin = 37;     // the number of the pushbutton pin
 const int GLED = 7;     // Green LED
 const int RLED = 6;    // Red LED
-const int T1= 40;      // Transistor for Voc1
+const int T1= 40;      // Transistor port for Voc1
+
+
+//Transistors for fixed resistors (to reduce resistance on dig. pots. at high load).
+int potSteps[] = {50, 50, 256, 256, 256, 10, 3, 10};  //steps for the potentiometer for each fixed resistor connected in parallel
+int numFixedRes = 3;
+const int Tr[]= {42, 43, 44, 45, 46, 47, 48, 49};  //ransistor ports for fixed resistors
 
 unsigned long restTime = 12;  //Time in between IV scans (minutes)
 unsigned int delayTime = 1000; // Generic time delay (ms)
@@ -299,6 +305,11 @@ void setup()
   // set the transistor pin as output
   //----------------------------------------
   pinMode(T1, OUTPUT);
+  for(int i=0; i<numFixedRes; i++)
+  {
+    pinMode(Tr[i], OUTPUT);
+  }
+
 
   //----------------------------------------
   // set the slaveSelectPin as an output:
@@ -335,14 +346,14 @@ void setup()
   if (! RTC.isrunning()) {
     Serial.println("RTC is NOT running!");
   }
-  
-  #ifdef TIMECAL
+
+#ifdef TIMECAL
   else
   {
-  RTC.adjust(DateTime(__DATE__, __TIME__));
-  Serial.println("RTC is syncing!");
+    RTC.adjust(DateTime(__DATE__, __TIME__));
+    Serial.println("RTC is syncing!");
   }
-  #endif
+#endif
 
   //----------------------------------------  
   // Initialization SD card
@@ -386,7 +397,7 @@ void setup()
       Serial.print(" into: ");
       Serial.println(nameFileA[i]);
     }
-      Serial.println();
+    Serial.println();
   }
 
   //----------------------------------------
@@ -425,7 +436,7 @@ void setup()
   scale[0] = 100; // set this to match TSL_S2 and TSL_S3
   scale[1] = 100;
 
-   ////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////
   // Setup coeffcients for voltage dividers and amplification factors
   ////////////////////////////////////////////////////////////////////
 
@@ -448,7 +459,7 @@ void setup()
 
 
   //Run a few measurement to get the baseline (first measurements are skewed)
-  getIrradiance(10, 1);
+  getIrradiance(2, 1);
 
 
   //----------------------------------------
@@ -681,62 +692,90 @@ void ivSingle() {
     jmax=0;
   }
 
+  int m1 = 0;
 
-  // Crank up potentiometer
+  //Turn all fixed resistors OFF 
+  for(int g=0; g<numFixedRes; g++)
+  {
+    digitalWrite(Tr[g], LOW);
+  }
 
-  for (int j=0; j< 256; j++)
+  delay(20);
+
+  //Start the measurements
+  for (int m=0; m<numFixedRes+1; m++)
   { 
-    for (int g=0; g<6; g++) {
-      digitalPotWrite(g, 255-j);
-    }
 
-    delay(20);
-
-    Serial.print(j);
-    Serial.print(",");
-
-    writeDateSerial();  
-    if(sds==true)
+    //For the last run (no fixed resistors), make sure all transistors are not turning ON (they remain OFF)  
+    if(m!=numFixedRes+1)
     {
-      dataFile.print(j);
-      dataFile.print(",");
-      writeDateSD(dataFile);
+      digitalWrite(Tr[m], HIGH);
+      delay(20);
     }
 
-    ip=fp;
-
-
-    for (int i=0; i<numCell; i++)
+    for (int j=0; j< potSteps[m]; j++)
     { 
-      // Acquire, average, and rescale with appropriate divider coefficient
-      V[i]=avoltage(ip, maxVolt, avNum)/Vcv[i];  
-      Vi[i]=avoltage(ip+1, maxVolt, avNum)/Vci[i];
-      ip+=2;
-
-
-      Isc[i]=max(Isc[i],Vi[i]/Ri[i]); 
-
-      if(Pmax[i]<=V[i]*Vi[i]*1000/Ri[i])
-      {
-        Pmax[i]=V[i]*Vi[i]*1000/Ri[i];
-        Vmax[i]=V[i];
-        Imax[i]=Vi[i]*1000/Ri[i];
-        jmax=j;
+      for (int g=0; g<6; g++) {
+        digitalPotWrite(g, 255-j);
       }
 
-      // write data on Serial and SD
+      delay(20);
+
+      Serial.print(j);
+      Serial.print(",");
+
+      writeDateSerial();  
       if(sds==true)
       {
-        writeIVSD(dataFile,V[i],Vi[i],Ri[i]);
-        //delay(500); 
+        dataFile.print(j);
+        dataFile.print(",");
+        writeDateSD(dataFile);
       }
 
-      writeIVSerial(V[i],Vi[i],Ri[i]);  
+      ip=fp;
 
+
+      for (int i=0; i<numCell; i++)
+      { 
+        // Acquire, average, and rescale with appropriate divider coefficient
+        V[i]=avoltage(ip, maxVolt, avNum)/Vcv[i];  
+        Vi[i]=avoltage(ip+1, maxVolt, avNum)/Vci[i];
+        ip+=2;
+
+
+
+        Isc[i]=max(Isc[i],Vi[i]/Ri[i]); 
+
+        if(Pmax[i]<=V[i]*Vi[i]*1000/Ri[i])
+        {
+          Pmax[i]=V[i]*Vi[i]*1000/Ri[i];
+          Vmax[i]=V[i];
+          Imax[i]=Vi[i]*1000/Ri[i];
+          jmax=j;
+        }
+
+        // write data on Serial and SD
+        if(sds==true)
+        {
+          writeIVSD(dataFile,V[i],Vi[i],Ri[i]);
+          //delay(500); 
+        }
+
+        writeIVSerial(V[i],Vi[i],Ri[i]);  
+
+      }
+      dataFile.println();
+      Serial.println();
+      // Eventually insert T measurement here if T needs to be measured at every IV step 
     }
-    dataFile.println();
-    Serial.println();
-    // Eventually insert T measurement here if T needs to be measured at every IV step 
+    
+    //Turn active transistor OFF.
+    if(m!=numFixedRes+1)
+    {
+      digitalWrite(Tr[m], LOW);
+      delay(20);
+    }
+    
   }
 
 
@@ -859,6 +898,7 @@ void ivSingle() {
   }
 
 }
+
 
 
 /////////////////////////////////////////////////
@@ -1018,7 +1058,7 @@ void writeIVSD(File dataFile, float V, float Vi, float Ri){
 void header(){  
   Serial.println();
   Serial.print("\"#\",");
-  Serial.print("\"time\",\"date\",");
+  Serial.print("\"time\",\"date\"");
   for (int i=0; i<numCell; i++)
   {
     Serial.print(",\"V");
@@ -1205,7 +1245,8 @@ void analysisSD(File dataFile, int i, float V, float I, float V1, float I1, floa
 ///////////////////////////////////////////
 
 void firstRunSerial()
-{ Serial.println();
+{ 
+  Serial.println();
   Serial.println("--------------------------------------");
   Serial.print(nameProg);
   Serial.print(" - v. ");
@@ -1245,17 +1286,17 @@ void firstRunSD(){
 
 String nameFile2(int a, int b) {
   String filename;
-  
+
   now = RTC.now();
   //filename += now.year();
   if(a==0)
   {
-  if(now.month() < 10)
-    filename += 0;
-  filename += (0 + now.month());
-  if(now.day() < 10)
-    filename += 0;
-  filename += (0 + now.day());
+    if(now.month() < 10)
+      filename += 0;
+    filename += (0 + now.month());
+    if(now.day() < 10)
+      filename += 0;
+    filename += (0 + now.day());
   }
   if(a!=0)
   {
@@ -1764,6 +1805,7 @@ void sensitivity(uint8_t level, int i)
   }
   return;
 }
+
 
 
 
