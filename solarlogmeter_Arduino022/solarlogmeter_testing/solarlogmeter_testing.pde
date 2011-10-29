@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 0.10.6 - PV IV logging 
+ v. 0.10.7 - PV IV logging 
  
  2011 - Nicola Ferralis - ferralis@mit.edu					  
  
@@ -111,7 +111,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "0.10.6 - 20111025";
+String versProg = "0.10.7 - 20111028";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -175,7 +175,7 @@ float Ri[] = {
 float Ri1[] = {
   1000.0, 1000.0, 1000.0, 1000.0};         //resistor for current amplification (fixed resistor 1K) 
 float Ri2[] = {
-  10000.0, 10000.0, 10000.0, 10000.0};     //resistor for current amplification (value of resistor determines the amplification factor) 
+  100000.0, 10000.0, 10000.0, 10000.0};     //resistor for current amplification (value of resistor determines the amplification factor) 
 
 float Vcv[]= {                            // Multiplication factor for the voltage divider (it's calculated during setup).
   0.0, 0.0, 0.0, 0.0}; 
@@ -204,14 +204,14 @@ const int T1= 37;      // Transistor port for Voc1
 //int potSteps[] = { 15, 15, 15, 15, 15, 15, 15, 15};  // Only for testing
 //int potSteps[] = { 50, 50, 50, 50, 50, 50, 50, 100};
 //int potSteps[] = {5, 5, 5, 5, 5, 5, 5, 5};
-int potSteps[] = {10, 10, 10, 10, 10, 10, 10};
+int potSteps[] = {10, 10, 10, 10, 10, 10, 10, 256};
 
-int delaydeb = 2000;
+int delaydeb = 1000;
 
 
 #else
 //Transistors for fixed resistors (to reduce resistance on dig. pots. at high load).
-int potSteps[] = { 50, 50, 50, 50, 50, 50, 50, 256};  //steps for the potentiometer for each fixed resistor connected in parallel
+int potSteps[] = { 50, 50, 50, 50, 50, 50, 50, 240};  //steps for the potentiometer for each fixed resistor connected in parallel
 #endif
 
 int numFixedRes = 7;
