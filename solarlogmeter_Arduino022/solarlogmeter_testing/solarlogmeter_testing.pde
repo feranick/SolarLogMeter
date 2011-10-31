@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 0.10.7 - PV IV logging 
+ v. 0.11 - PV IV logging 
  
  2011 - Nicola Ferralis - ferralis@mit.edu					  
  
@@ -111,7 +111,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "0.10.7 - 20111028";
+String versProg = "0.11 - 20111031 - Halloween edition";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -202,12 +202,12 @@ const int T1= 37;      // Transistor port for Voc1
 ////////////////////////////////
 #ifdef DEBUG
 //int potSteps[] = { 15, 15, 15, 15, 15, 15, 15, 15};  // Only for testing
-//int potSteps[] = { 50, 50, 50, 50, 50, 50, 50, 100};
+int potSteps[] = { 50, 50, 50, 50, 50, 50, 50, 100};
 //int potSteps[] = {5, 5, 5, 5, 5, 5, 5, 5};
-int potSteps[] = {10, 10, 10, 10, 10, 10, 10, 256};
+//int potSteps[] = {10, 10, 10, 10, 10, 10, 10, 256};
 
 int delaydeb = 1000;
-
+int fresdeb = 0;
 
 #else
 //Transistors for fixed resistors (to reduce resistance on dig. pots. at high load).
@@ -732,7 +732,15 @@ void ivSingle() {
     for (int j=0; j< potSteps[m]; j++)
     { 
       for (int g=0; g<6; g++) {
-        digitalPotWrite(g, 255-j);
+        
+      #ifdef DEBUG
+        if(fresdeb==0)
+          {digitalPotWrite(g, 255-j);}
+        if(fresdeb== 1)
+          {digitalPotWrite(g, 255);}
+      #else
+          digitalPotWrite(g, 255-j);
+      #endif 
       }
 
       delay(100);

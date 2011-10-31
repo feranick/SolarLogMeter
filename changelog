@@ -1,3 +1,7 @@
+Version 0.11 - 20111031: Stabilized version based on 0.10, ready for production. Introduced debugging symbols and procedures. It can currently handle 3 6-pots + 4 fix resistors per cell.
+
+Version 0.10 - 20111020: Initial implementation of multi potentiometer to scale resistance to low value. This version has been used mainly for testing.
+
 Version 0.9.8 - 20111011: Temporary fix with issue about filename 
 (October date make SLM hang). The fix changes the names of the files for 
 individual cells from dates to SC.

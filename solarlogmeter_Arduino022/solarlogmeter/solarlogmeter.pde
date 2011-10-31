@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 0.10 - PV IV logging 
+ v. 0.11 - PV IV logging 
  
  2011 - Nicola Ferralis - ferralis@mit.edu					  
  
@@ -77,11 +77,19 @@
 #include <SPI.h>
 #include "RTClib.h"
 
-//-----------------------------------------------
+//-------------------------------------------------
 // Type of temperature measurement system used.
 //  Comment for thermistor, uncomment for barometer
-//-----------------------------------------------
+//-------------------------------------------------
 #define TBAR 
+
+//--------------------------------------------------
+// Activate debugging mode
+// Comment for regular use, uncomment for debugging
+//--------------------------------------------------
+
+
+//#define DEBUG
 
 //-------------------------------------------------------------------------------
 // TO BE USED ONLY FOR CALIBRATION OF REAL TIME CLOCK. 
@@ -103,7 +111,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "0.10 - 20111014";
+String versProg = "0.11 - 20111031 - Halloween edition";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -167,7 +175,7 @@ float Ri[] = {
 float Ri1[] = {
   1000.0, 1000.0, 1000.0, 1000.0};         //resistor for current amplification (fixed resistor 1K) 
 float Ri2[] = {
-  10000.0, 100000.0, 100000.0, 100000.0};     //resistor for current amplification (value of resistor determines the amplification factor) 
+  100000.0, 10000.0, 10000.0, 10000.0};     //resistor for current amplification (value of resistor determines the amplification factor) 
 
 float Vcv[]= {                            // Multiplication factor for the voltage divider (it's calculated during setup).
   0.0, 0.0, 0.0, 0.0}; 
@@ -182,18 +190,33 @@ float lowV = 1.0;     // min voltage for LED warning
 
 int avNum = 80;     // number of averages to be taken over an analog input
 int ledPin = 13;       // on actual arduino boards this is pre-hooked up.
-const int singleIVPin = 33;     // the number of the pushbutton pin
-const int multiIVPin = 35;     // the number of the pushbutton pin
-const int stopIVPin = 37;     // the number of the pushbutton pin
+const int singleIVPin = 31;     // the number of the pushbutton pin
+const int multiIVPin = 33;     // the number of the pushbutton pin
+const int stopIVPin = 35;     // the number of the pushbutton pin
 const int GLED = 7;     // Green LED
 const int RLED = 6;    // Red LED
-const int T1= 40;      // Transistor port for Voc1
+const int T1= 37;      // Transistor port for Voc1
 
+/////////////////////////////////
+//Definitions for debugging only 
+////////////////////////////////
+#ifdef DEBUG
+//int potSteps[] = { 15, 15, 15, 15, 15, 15, 15, 15};  // Only for testing
+int potSteps[] = { 50, 50, 50, 50, 50, 50, 50, 100};
+//int potSteps[] = {5, 5, 5, 5, 5, 5, 5, 5};
+//int potSteps[] = {10, 10, 10, 10, 10, 10, 10, 256};
 
+int delaydeb = 1000;
+int fresdeb = 0;
+
+#else
 //Transistors for fixed resistors (to reduce resistance on dig. pots. at high load).
-int potSteps[] = {50, 50, 256, 256, 256, 10, 3, 10};  //steps for the potentiometer for each fixed resistor connected in parallel
-int numFixedRes = 3;
-const int Tr[]= {42, 43, 44, 45, 46, 47, 48, 49};  //ransistor ports for fixed resistors
+int potSteps[] = { 50, 50, 50, 50, 50, 50, 50, 240};  //steps for the potentiometer for each fixed resistor connected in parallel
+#endif
+
+int numFixedRes = 7;
+const int Tr[]= {
+  38, 39, 40, 41, 42, 43, 44};  //ransistor ports for fixed resistors
 
 unsigned long restTime = 12;  //Time in between IV scans (minutes)
 unsigned int delayTime = 1000; // Generic time delay (ms)
@@ -285,7 +308,7 @@ void setup()
 { //----------------------------------------
   // Initialize serial port 
   //----------------------------------------
-  Serial.begin(9600);
+  Serial.begin(57600);
 
   //----------------------------------------
   // Set output for on board LED 
@@ -697,29 +720,30 @@ void ivSingle() {
   //Turn all fixed resistors OFF 
   for(int g=0; g<numFixedRes; g++)
   {
-    digitalWrite(Tr[g], LOW);
+    digitalWrite(Tr[g], HIGH);
   }
 
-  delay(20);
+  delay(100);
 
   //Start the measurements
   for (int m=0; m<numFixedRes+1; m++)
   { 
 
-    //For the last run (no fixed resistors), make sure all transistors are not turning ON (they remain OFF)  
-    if(m!=numFixedRes+1)
-    {
-      digitalWrite(Tr[m], HIGH);
-      delay(20);
-    }
-
     for (int j=0; j< potSteps[m]; j++)
     { 
       for (int g=0; g<6; g++) {
-        digitalPotWrite(g, 255-j);
+        
+      #ifdef DEBUG
+        if(fresdeb==0)
+          {digitalPotWrite(g, 255-j);}
+        if(fresdeb== 1)
+          {digitalPotWrite(g, 255);}
+      #else
+          digitalPotWrite(g, 255-j);
+      #endif 
       }
 
-      delay(20);
+      delay(100);
 
       Serial.print(j);
       Serial.print(",");
@@ -758,7 +782,6 @@ void ivSingle() {
         if(sds==true)
         {
           writeIVSD(dataFile,V[i],Vi[i],Ri[i]);
-          //delay(500); 
         }
 
         writeIVSerial(V[i],Vi[i],Ri[i]);  
@@ -767,15 +790,21 @@ void ivSingle() {
       dataFile.println();
       Serial.println();
       // Eventually insert T measurement here if T needs to be measured at every IV step 
+      #ifdef DEBUG
+      delay(delaydeb); //debugging only
+      #endif
     }
-    
+
     //Turn active transistor OFF.
     if(m!=numFixedRes+1)
     {
       digitalWrite(Tr[m], LOW);
-      delay(20);
+      delay(100);
     }
-    
+    #ifdef DEBUG
+    Serial.print("Switching OFF transistor: ");
+    Serial.println(m+1);
+    #endif
   }
 
 
@@ -940,7 +969,7 @@ float TC()
 // convert analog output into actual voltage.
 //////////////////////////////////////////////
 
-float voltage(int analogPin, float volt)
+inline float voltage(int analogPin, float volt)
 {
   int v = analogRead(analogPin); 
   float vf = volt*((float)v/(float)1024);  //rescale channel with max voltage
@@ -969,7 +998,7 @@ float avoltage(int analogPin, float Volt, int numAver)
 // set potentiometer
 //////////////////////////////////////////////
 
-int digitalPotWrite(int address, int value) {
+inline int digitalPotWrite(int address, int value) {
   // take the SS pin low to select the chip:
   digitalWrite(slaveSelectPin,LOW);
   //  send in the address and value via SPI:
@@ -1805,6 +1834,7 @@ void sensitivity(uint8_t level, int i)
   }
   return;
 }
+
 
 
 
