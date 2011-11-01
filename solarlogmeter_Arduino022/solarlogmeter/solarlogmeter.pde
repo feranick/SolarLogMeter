@@ -111,7 +111,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "0.11 - 20111031 - Halloween edition";
+String versProg = "0.11 - 20111101";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
