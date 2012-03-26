@@ -1,3 +1,5 @@
+Version 0.14 - 20120326: Arduino IDE 1.0 is the default supported platform. IDE v.0.22 no longer supported. Added sun position calculator based on real time time/date and customizable location. 
+
 Version 0.11 - 20111031: Stabilized version based on 0.10, ready for production. Introduced debugging symbols and procedures. It can currently handle 3 6-pots + 4 fix resistors per cell.
 
 Version 0.10 - 20111020: Initial implementation of multi potentiometer to scale resistance to low value. This version has been used mainly for testing.
