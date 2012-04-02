@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 0.14 - PV IV logging - with solar  
+ v. 0.15 - PV IV logging 
  
  2011 - Nicola Ferralis - ferralis@mit.edu					  
  
@@ -44,8 +44,8 @@
  3. Temperature measurement: The current code supports only one thermistor. The values
  need to be properly set according to the right thermistor.   
  
- 4. SD Card
- If using the Arduino Mega, in the file:
+ 4. SD Card:
+ If using the the Adafruit Logging shield with an Arduino Mega, in the file:
  ~arduino/libraries/SD/utility/Sd2Card.h
  
  change the line: 
@@ -54,6 +54,8 @@
  #define MEGA_SOFT_SPI 1
  
  Do not change the other pins!
+ 
+ Also make sure the definition below (SDshield) is correctly set for the type of SD shield used.
  
  5. Temperature measurements:
  
@@ -81,10 +83,20 @@
 #include "RTClib.h"
 #include "SLMtypes.h" 
 
+//--------------------------------------------------------------------------------
+// Change this to match your SD shield or module;
+// Arduino Ethernet shield: pin 4
+// Adafruit SD shields and modules: pin 10 (also change MEGA_SOFT_SPI from 0 to 1
+// Sparkfun SD shield: pin 8
+//---------------------------------------------------------------------------------
+
+#define SDshield 10 
+
 //-------------------------------------------------
 // Type of temperature measurement system used.
 //  Comment for thermistor, uncomment for barometer
 //-------------------------------------------------
+
 #define TBAR 
 
 //--------------------------------------------------
@@ -116,7 +128,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "0.14 - 20120326";
+String versProg = "0.15 - 20120402";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -259,7 +271,7 @@ float Rtf = 976.0;   // Value used for voltage divider in T measurement.
 // SD specific definitions
 //-------------------------
 
-const int chipSelect = 10;
+const int chipSelect = SDshield;
 boolean sd = true;     // enable SD support
 boolean sds = false;    //switch SD on/off
 char nameFile[13];
