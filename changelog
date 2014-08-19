@@ -1,3 +1,11 @@
+Version 1.97.2 - 20140818: Completely new version. New IV acquisition based on IVy
+http://pv.mit.edu/home/education/resources-for-educators/build-your-own-sourcemeter/
+
+New stable is: v 1.97.2
+
+
+==========================  END of LIFE v. 0.15 ==========================
+
 Version 0.15 - 20120402: Added support for Arduino Ethernet Shield (with SD). Recompilation is necessary (along with changes in the header files and definition variables).
 
 Version 0.14 - 20120326: Arduino IDE 1.0 is the default supported platform. IDE v.0.22 no longer supported. Added sun position calculator based on real time time/date and customizable location. 
