@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 1.97.2 - PV IV logging 
+ v. 1.99.1 - PV IV logging 
  2011-2014 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -144,12 +144,18 @@
 //#define TIMECAL  //Uncomment for calibration of real time clock. Otherwise leave commented.
 
 
+//--------------------------------------------------------------------
+//  Fixed vs variable amplification resistor for current measurement.
+//  Comment for single, uncomment for variable
+//--------------------------------------------------------------------
+//#define MULTIR
+
 //------------------
 // Name and version 
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "1.97.2 - 20140818";
+String versProg = "1.99.1 - 20140822";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -174,12 +180,20 @@ float northOrSouth = 180;
 void(* resetFunc) (void) = 0; //declare reset function @ address 0
 int numCell = 1;        // Max number of cells to be measured
 
-float Ri[] = {
-  0.1, 0.1, 0.1, 0.1};     // resistor for current measurement A.
+ // resistor for current measurement A.
+float Ri[] = {0.1, 0.1, 0.1, 0.1}; 
 
-int voltIN[]={
-  0,0,0,0};  // Applies the correction to the input voltage for a particular cell is the voltage divider is present (0), 
+// resistor for Amplification of current measurement A.
+#ifdef MULTIR
+float RAi[] = {333.4, 333.4, 333.4};
+#endif
+
+float RAmpI = 333.4; //Change this only when MULTIR is disabled. 
+
+
+// Applies the correction to the input voltage for a particular cell is the voltage divider is present (0), 
 // or leave it with no correction (1).
+int voltIN[]={0,0,0,0};  
 
 // Because of the SD/RTC shield, the first available analog pin is #8
 int fp=8; 
@@ -198,6 +212,12 @@ const int multiIVPin = 33;     // the number of the pushbutton pin
 const int stopIVPin = 35;     // the number of the pushbutton pin
 const int GLED = 7;     // Green LED
 const int RLED = 6;    // Red LED
+
+#ifdef MULTIR
+int TR1 = 5;    // digital pin for analog out for Amplification resistor R1.
+int TR2 = 6;    // digital pin for analog out for Amplification resistor R2.
+int TR3 = 7;    // digital pin for analog out for Amplification resistor R3.
+#endif
 
 /////////////////////////////////
 // IVy specific variables
@@ -371,6 +391,19 @@ void setup()
   pinMode(singleIVPin, INPUT); 
   pinMode(multiIVPin, INPUT); 
   pinMode(stopIVPin, INPUT); 
+  
+  //----------------------------------------------------------
+  // set the Transistor for Amplification Resistors as output
+  //----------------------------------------------------------
+  
+#ifdef MULTIR
+   pinMode(TR1, OUTPUT);  
+   pinMode(TR2, OUTPUT);
+   pinMode(TR3, OUTPUT);
+   
+   TRselect(1,0,0);
+   Serial.println("Variable Amplification on current measurement enabled");
+#endif
 
   //----------------------------------------
   // initialize SPI:
@@ -727,6 +760,13 @@ void ivSingle() {
 
   int m1 = 0;
 
+#ifdef MULTIR
+  // Set first transistor for current amplification;
+  TRselect(1, 0, 0);
+  // Check for and set the proper transistor to use for current amplification
+  TRcheck(0);
+  TRcheck(1);
+#endif
 
 //////////////////////////////////////////////////////
 // BEGINNING IVy code
@@ -807,7 +847,7 @@ void ivSingle() {
       delay(2);
       
       // Current Measurement
-      Vi[i] = currentRead(ip+1, maxVolt, polar);
+      Vi[i] = currentRead(ip+1, maxVolt, polar, RAmpI);
       
       delay(2);
       
@@ -2133,16 +2173,16 @@ int dacWrite(byte highbyte, byte lowbyte) {
   digitalWrite(CS,HIGH);
 }
 
-float currentRead(int iPin, float Volt, int polar){
+float currentRead(int iPin, float Volt, int polar, float RAmpI){
   
-  float c1 = 334.33;
+  //float c1 = 334.33;   // this needs to be moved up in the initial definitions.
   float c2 = 3.01;
   float c3 = 15.01;
   float c4 = 12.0;
   
   analogReference(DEFAULT);
   //float currentReadingmA = (-1*polar)*(((float)analogRead(iPin) * 5.0 / 1024.0) - refV * 334.33 * (3.01 / 15.01)) / (334.33 * (12.0 / 15.01));
-  float currentReadingmA = (-1*polar)*(((float)analogRead(iPin) * Volt / 1024.0) - refV * c1 * (c2 / c3)) / (c1 * (c4 / c3));
+  float currentReadingmA = (-1*polar)*(((float)analogRead(iPin) * Volt / 1024.0) - refV * RAmpI * (c2 / c3)) / (RAmpI * (c4 / c3));
   analogReference(DEFAULT);
   return currentReadingmA;
 }
@@ -2166,3 +2206,110 @@ void resetVOpAmp() {
 
 
 
+////////////////////////////////////////////////////
+// Routine for Transistor Control for amplification   
+/////////////////////////////////////////////////////
+
+#ifdef MULTIR
+
+void TRselect(int t1, int t2, int t3) {
+
+  if(t1==0)
+    {analogWrite(TR1, LOW);}
+  else
+    {analogWrite(TR1, HIGH);
+    RAmpI = RAi[0];}  
+    
+  if(t2==0)
+    {analogWrite(TR2, LOW);}
+  else
+    {analogWrite(TR2, HIGH);
+    RAmpI = RAi[1];} 
+
+  if(t3==0)
+    {analogWrite(TR3, LOW);}
+  else
+    {analogWrite(TR3, HIGH);
+    RAmpI = RAi[2];}     
+    
+}
+
+
+  ///////////////////////////////////////////
+ // Check for correct amplification resistor
+ ///////////////////////////////////////////
+ 
+ void TRcheck(int seq){
+ 
+  float Vi[numCell];
+  
+// create float variable for start and stop voltage DAC level:
+  float startVLevelFloat = startV * 1000.0 + 0.5;
+  float stopVLevelFloat = stopV * 1000.0 + 0.5;
+  float stopVLevelFloatADC = stopV * 204.6;  // this is for ADC level
+  
+  // create increment to obtain numPoints number of data points
+  float stepLevelFloat = (stopVLevelFloat - startVLevelFloat) / (numPoints - 1.0);
+  
+  // create int variables for start and stop voltage levels and stepLevel (truncates float):
+  int startVLevel = (int)startVLevelFloat;
+  int stopVLevel = (int)stopVLevelFloat;  
+  int stopVLevelADC = (int)stopVLevelFloatADC;
+  int stepLevel = (int)stepLevelFloat;
+  
+  boolean stepIsExact = (stepLevelFloat == float(stepLevel)); // determines whether an extra last point should be taken
+  
+  //more bit math place holders
+  int highFour; 
+  int fourShift;
+  byte highFourShifted;
+  byte highEight;
+  int low;
+  byte lowEight;
+
+  
+  // define current and voltage variables:
+  float current;
+  float deviceVoltage;
+  int sweep; //voltage sweep function
+      
+    highFour = 3840 & startVLevel;
+    fourShift = highFour >> 8;
+    highFourShifted = (byte)fourShift;
+    highEight = channelV | highFourShifted;
+    low = 255 & startVLevel;
+    lowEight = (byte)low;
+    
+    sweep = dacWrite(highEight, lowEight);
+    
+    int ip=fp;
+    for (int i=0; i<numCell; i++)
+      {
+
+      //V[i] = avoltage(ip, maxVolt, Vgain, avNum);
+      //delay(2);
+      
+      // Current Measurement
+      Vi[i] = currentRead(ip+1, maxVolt, polar, RAmpI);
+      
+      delay(2);
+      
+      if(Vi[i]>=maxVolt)
+        {if(seq==0)
+          {TRselect(0,1,0);
+          Serial.println(" Using TR2 for amplification measurement");
+          // Add new coefficient for the correct R value
+          
+          }
+         if(seq==1)
+          {TRselect(0,0,1);
+          Serial.println(" Using TR3 for amplification measurement");
+          // Add new coefficient for the correct R value
+          }
+        }
+      ip+=2;
+      }
+ }
+
+ //////////////////////////////////////////   
+#endif
