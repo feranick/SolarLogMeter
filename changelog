@@ -1,3 +1,5 @@
+Version 1.100.1 - 20140823: Bug fixes and code cleanup. Improved variable initialization. 
+
 Version 1.99.1 - 20140822: Added support for multiple amplification resistors to extend range of testable devices. Bug fixes.
 
 Version 1.97.2 - 20140818: Completely rewritten. New IV acquisition based on IVy

@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 1.99.1 - PV IV logging 
+ v. 1.100.1 - PV IV logging 
  2011-2014 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -155,7 +155,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "1.99.1 - 20140822";
+String versProg = "1.100.1 - 20140823";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -712,13 +712,9 @@ void ivSingle() {
   /////////////////////////////////
   // DATA ACQUISITION AND SAVING
   /////////////////////////////////
-
-  float V[numCell], Vi[numCell];
-  float Voc[numCell], Ioc[numCell], Isc[numCell], Pmax[numCell], Vmax[numCell], Imax[numCell];
-  int jmax;
-  int ip=fp;
-  float T=0.0; 
-  float P=0.0;
+  
+  float T = 0.0; 
+  float P = 0.0;
   float irra0 = 0.0;
   float irra1 = 0.0;
 
@@ -729,7 +725,6 @@ void ivSingle() {
   {
     temperature = bmp085GetTemperature(bmp085ReadUT());
     pressure = bmp085GetPressure(bmp085ReadUP());
-
     T=temperature*0.10;
     P=pressure/100.00;
   }
@@ -745,6 +740,12 @@ void ivSingle() {
   irra1=watt1;
 #endif
 
+  float V[numCell], Vi[numCell];
+  float Voc[numCell], Ioc[numCell], Isc[numCell], Pmax[numCell], Vmax[numCell], Imax[numCell];
+  
+  int jmax;
+  int ip=fp;
+
   //////////////////////////////
   //Measure IV
   //////////////////////////////
@@ -752,9 +753,14 @@ void ivSingle() {
   //Setup for Isc, Pmax
   for (int i=0; i<numCell; i++)
   { 
+    Vi[i] = 0.0;
+    V[i]  = 0.0;
     Voc[i] = 0.0; 
     Isc[i] = 0.0;
+    Ioc[i] = 0.0;
     Pmax[i] = 0.0;
+    Vmax[i] = 0.0;
+    Imax[i] = 0.0;
     jmax = 0;
   }
 
@@ -774,7 +780,7 @@ void ivSingle() {
 
 //boolean currentOverload = false; // indicates currentOverload during sweep
   
-  // create float variable for start and stop voltage DAC level:
+// create float variable for start and stop voltage DAC level:
   float startVLevelFloat = startV * 1000.0 + 0.5;
   float stopVLevelFloat = stopV * 1000.0 + 0.5;
   float stopVLevelFloatADC = stopV * 204.6;  // this is for ADC level
@@ -783,37 +789,25 @@ void ivSingle() {
   float stepLevelFloat = (stopVLevelFloat - startVLevelFloat) / (numPoints - 1.0);
   
   // create int variables for start and stop voltage levels and stepLevel (truncates float):
-  int startVLevel = (int)startVLevelFloat;
-  int stopVLevel = (int)stopVLevelFloat;  
-  int stopVLevelADC = (int)stopVLevelFloatADC;
-  int stepLevel = (int)stepLevelFloat;
-  
-  boolean stepIsExact = (stepLevelFloat == float(stepLevel)); // determines whether an extra last point should be taken
+  //int startVLevel = (int)startVLevelFloat;
+  boolean stepIsExact = (stepLevelFloat == float((int)stepLevelFloat)); // determines whether an extra last point should be taken
   
   //more bit math place holders
-  int highFour; 
-  int fourShift;
-  byte highFourShifted;
+ 
   byte highEight;
-  int low;
   byte lowEight;
 
-  
   // define current and voltage variables:
-  float current;
-  float deviceVoltage;
-  int sweep; //voltage sweep function
+  float current = 0.0;
+  float deviceVoltage = 0.0;
+  int sweep = 0; //voltage sweep function
   
   //Serial.println("DATA");  // signal to applet that data is coming
   // sweep voltage on channel A:
-  for (int level = startVLevel; level < stopVLevel; level += stepLevel) {
-  // create 4 control bits and 12 data bits:
-    highFour = 3840 & level;
-    fourShift = highFour >> 8;
-    highFourShifted = (byte)fourShift;
-    highEight = channelV | highFourShifted;
-    low = 255 & level;
-    lowEight = (byte)low;
+  for (int level = (int) startVLevelFloat; level < (int) stopVLevelFloat; level += (int)stepLevelFloat) {
+    
+    highEight = channelV | (byte) ((3840 & level) >> 8);
+    lowEight = (byte) 255 & level;
     
     sweep = dacWrite(highEight, lowEight);
     
@@ -2241,7 +2235,10 @@ void TRselect(int t1, int t2, int t3) {
  
  void TRcheck(int seq){
  
-  float Vi[numCell];
+ float Vi[numCell];
+ 
+ for (int i=0; i<numCell; i++)
+   Vi[i] = 0.0;
   
 // create float variable for start and stop voltage DAC level:
   float startVLevelFloat = startV * 1000.0 + 0.5;
@@ -2253,37 +2250,25 @@ void TRselect(int t1, int t2, int t3) {
   
   // create int variables for start and stop voltage levels and stepLevel (truncates float):
   int startVLevel = (int)startVLevelFloat;
-  int stopVLevel = (int)stopVLevelFloat;  
-  int stopVLevelADC = (int)stopVLevelFloatADC;
-  int stepLevel = (int)stepLevelFloat;
-  
-  boolean stepIsExact = (stepLevelFloat == float(stepLevel)); // determines whether an extra last point should be taken
+  boolean stepIsExact = (stepLevelFloat == float((int)stepLevelFloat)); // determines whether an extra last point should be taken
   
   //more bit math place holders
-  int highFour; 
-  int fourShift;
-  byte highFourShifted;
+ 
   byte highEight;
-  int low;
   byte lowEight;
-
   
   // define current and voltage variables:
-  float current;
-  float deviceVoltage;
-  int sweep; //voltage sweep function
-      
-    highFour = 3840 & startVLevel;
-    fourShift = highFour >> 8;
-    highFourShifted = (byte)fourShift;
-    highEight = channelV | highFourShifted;
-    low = 255 & startVLevel;
-    lowEight = (byte)low;
+  float current = 0.0;
+  float deviceVoltage = 0.0;
+  int sweep = 0; //voltage sweep function
     
-    sweep = dacWrite(highEight, lowEight);
+  highEight = channelV | (byte) ((3840 & ((int)startVLevelFloat)) >> 8);
+  lowEight = (byte) 255 & startVLevel;
     
-    int ip=fp;
-    for (int i=0; i<numCell; i++)
+  sweep = dacWrite(highEight, lowEight);
+    
+  int ip=fp;
+  for (int i=0; i<numCell; i++)
       {
 
       //V[i] = avoltage(ip, maxVolt, Vgain, avNum);
