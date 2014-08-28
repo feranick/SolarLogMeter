@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 1.101.1 - PV IV logging 
+ v. 1.102.1 - PV IV logging 
  2011-2014 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -106,6 +106,12 @@
 #include "SLMtypes.h" 
 
 //--------------------------------------------------------------------------------
+// Uncomment for use with Arduino DUE
+//--------------------------------------------------------------------------------
+
+//#define ArDUE
+
+//--------------------------------------------------------------------------------
 // Change this to match your SD shield or module;
 // Arduino Ethernet shield: pin 4
 // Adafruit SD shields and modules: pin 10 (also change MEGA_SOFT_SPI from 0 to 1
@@ -155,7 +161,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "1.101.1 - 20140827";
+String versProg = "1.102.1 - 20140828";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -294,7 +300,7 @@ float pi = 3.14159265;
 //Real time chip
 //---------------
 
-RTC_DS1307 RTC; // define the Real Time Clock object
+RTC_DS1307 rtc; // define the Real Time Clock object
 DateTime now;   // New RTC library
 
 
@@ -414,12 +420,17 @@ void setup()
   //----------------------------------------
   //Initialize reference voltage
   //----------------------------------------
-  analogReference(DEFAULT);  //0 to 5 V
+#ifdef ArDUE  // The arduino DUE only accepts the standard 3.3V.
+  analogReference(AR_DEFAULT);
+  maxVolt = 3.3;
+#else        // For any board other than the Arduino Due
+  analogReference(DEFAULT);  //0 to 5 V 
   maxVolt = 5.0;
-  //analogReference(INTERNAL2V56); //0-2.56V
+  //analogReference(INTERNAL2V56); //0-2.56V  
   //maxVolt = 2.56;
   //analogReference(INTERNAL1V1); //0-1.1V
   //maxVolt = 1.1;
+#endif  
   
   //----------------------------------------
   // Reset reference voltage DAC
@@ -436,16 +447,16 @@ void setup()
   // get the time from the RTC
   //----------------------------------------
   Wire.begin();  
-  RTC.begin();
+  rtc.begin();
 
-  if (! RTC.isrunning()) {
+  if (! rtc.isrunning()) {
     Serial.println("RTC is NOT running!");
   }
 
 #ifdef TIMECAL
   else
   {
-    RTC.adjust(DateTime(__DATE__, __TIME__));
+    rtc.adjust(DateTime(__DATE__, __TIME__));
     Serial.println("RTC is syncing!");
   }
 #endif
@@ -838,7 +849,7 @@ void ivSingle() {
       //Divide by 1024 for 10 bit resolution, multiply by 5 to scale to the 5 volt max Arduino output.  
       //Then multiply by 2 because of the non-inverting amplifier with a gain of 2
     
-      // 5.0 is now set as the AnalogReference(DEFAULT);
+      // 5.0 is now set as the AnalogReference(DEFAULT) or AnalogReference(1);
       // the 2 factor is now set initially in the definition parameters as Vgain
               
       // Voltage Measurement
@@ -1074,7 +1085,7 @@ float TC()
 
 void writeDateSerial(){
   // digital clock display of the time
-  now = RTC.now();
+  now = rtc.now();
   Serial.print("\"");
   Serial.print(now.month(), DEC );
   Serial.print("-");
@@ -1109,7 +1120,7 @@ void writeIVSerial(float V, float Vi, float Ri){
 //////////////////////////////////////////////
 
 void writeDateSD(File dataFile){
-  now = RTC.now();
+  now = rtc.now();
   dataFile.print("\"");
   dataFile.print(now.month(), DEC);
   dataFile.print("-");
@@ -1402,7 +1413,7 @@ void firstRunSD(){
 String nameFile2(int a, int b) {
   String filename;
 
-  now = RTC.now();
+  now = rtc.now();
   //filename += now.year();
   if(a==0)
   {
@@ -1558,7 +1569,7 @@ void NowSerial(){
   getIrradiance(1, 0);
 #endif
 
-  DateTime now = RTC.now();
+  DateTime now = rtc.now();
   
   Serial.println();
   Serial.println("---------------------------------------------");
@@ -1998,7 +2009,7 @@ void sensitivity(uint8_t level, int i)
 
   sunPos sPos;
   
-  //now = RTC.now();
+  //now = rtc.now();
   float month2 = (float) now.month();
   float day = (float) now.day();
   float hour2 = (float) now.hour();
@@ -2277,10 +2288,21 @@ float currentRead(int iPin, float Volt, int polar, float RAmpI){
   float c3 = 15.01;
   float c4 = 12.0;
   
-  analogReference(DEFAULT);
+#ifdef ArDUE  // The arduino DUE only accepts the standard 3.3V.
+  analogReference(AR_DEFAULT);
+#else  
+  analogReference(DEFAULT);  //For any board other than the Arduino Due
+#endif
+
   //float currentReadingmA = (-1*polar)*(((float)analogRead(iPin) * 5.0 / 1024.0) - refV * 334.33 * (3.01 / 15.01)) / (334.33 * (12.0 / 15.01));
   float currentReadingmA = (-1*polar)*(((float)analogRead(iPin) * Volt / 1024.0) - refV * RAmpI * (c2 / c3)) / (RAmpI * (c4 / c3));
-  analogReference(DEFAULT);
+
+#ifdef ArDUE  // The arduino DUE only accepts the standard 3.3V.
+  analogReference(AR_DEFAULT);
+#else  
+  analogReference(DEFAULT);  //For any board other than the Arduino Due
+#endif
+
   return currentReadingmA;
 }
 

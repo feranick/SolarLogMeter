@@ -1,3 +1,5 @@
+Version 1.102.1 - 20140828: Included support for Arduino Due.
+
 Version 1.101.1 - 20140827: Bug fixes. Voltage applied is now reset at the end of a sweep.
 
 Version 1.100.1 - 20140823: Bug fixes and code cleanup. Improved variable initialization. 
