@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 1.100.1 - PV IV logging 
+ v. 1.101.1 - PV IV logging 
  2011-2014 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -35,7 +35,7 @@
  1. Controls a Microchip MCP4822 12-bit dual-voltage output DAC.
   The MCP4822 is SPI-compatible. To command it, hold the CS pin low and send 16 bits,
   4 configuration bits
-   DAC selection: 1 = DACa, 0 = DACb
+   DAC selection: 0 = DACa, 1 = DACb
    empty
    gain selection: 1 = 1x, 0 = 2x with Vref = 2.048
    output shutdown: 1 = Vout is available, 0 = Vout is not available R = 500 k-ohms
@@ -155,7 +155,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "1.100.1 - 20140823";
+String versProg = "1.101.1 - 20140827";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -183,12 +183,13 @@ int numCell = 1;        // Max number of cells to be measured
  // resistor for current measurement A.
 float Ri[] = {0.1, 0.1, 0.1, 0.1}; 
 
-// resistor for Amplification of current measurement A.
+// resistor for Amplification of current measurement A (previously known as c1).
 #ifdef MULTIR
-float RAi[] = {333.4, 333.4, 333.4};
+float RAi[] = {67.4, 67.4, 67.4};
 #endif
 
-float RAmpI = 333.4; //Change this only when MULTIR is disabled. 
+// This used to be called c1.
+float RAmpI = 67.4; //Change this only when MULTIR is disabled (single amplification resistor, no transistor switching). 
 
 
 // Applies the correction to the input voltage for a particular cell is the voltage divider is present (0), 
@@ -419,7 +420,12 @@ void setup()
   //maxVolt = 2.56;
   //analogReference(INTERNAL1V1); //0-1.1V
   //maxVolt = 1.1;
-
+  
+  //----------------------------------------
+  // Reset reference voltage DAC
+  //----------------------------------------
+  resetVOpAmp();
+  
   //---------------------------------------------------
   //Stamp header with program details and data labels.
   //----------------------------------------
@@ -800,7 +806,7 @@ void ivSingle() {
   // define current and voltage variables:
   float current = 0.0;
   float deviceVoltage = 0.0;
-  int sweep = 0; //voltage sweep function
+  //int sweep = 0; //voltage sweep function
   
   //Serial.println("DATA");  // signal to applet that data is coming
   // sweep voltage on channel A:
@@ -809,7 +815,7 @@ void ivSingle() {
     highEight = channelV | (byte) ((3840 & level) >> 8);
     lowEight = (byte) 255 & level;
     
-    sweep = dacWrite(highEight, lowEight);
+    dacWrite(highEight, lowEight);
     
     // Add sequence number
     
@@ -2119,7 +2125,6 @@ void sensitivity(uint8_t level, int i)
 return h;
       }
       
-      
 //////////////////////////////////////////////
 // convert analog output into actual voltage.
 //////////////////////////////////////////////
@@ -2131,7 +2136,6 @@ inline float voltage(int analogPin, float volt, float gain)
   float vf = gain*volt*((float)v/(float)1024.0);  //rescale channel with max voltage
   return vf;
 }
-
 
 //////////////////////////////////////////////////////////
 // collect numAver times the analog output, average them, 
@@ -2148,57 +2152,7 @@ float avoltage(int analogPin, float Volt, float gain, int numAver)
   }
   return vt/(float)numAver;
 }      
-      
-      
-//////////////////////////////////////////////////////////////
-//FUNCTIONS for DAC control (IVy)
-//////////////////////////////////////////////////////////////
-
-/*Define write function for DAC */
-int dacWrite(byte highbyte, byte lowbyte) {
-  // take the CS pin low to select the chip:
-  digitalWrite(CS,LOW);
-  delay(10);
-  //  send in the address and value via SPI:
-  SPI.transfer(highbyte);
-  SPI.transfer(lowbyte);
-  delay(10);
-  // take the CS pin high to de-select the chip:
-  digitalWrite(CS,HIGH);
-}
-
-float currentRead(int iPin, float Volt, int polar, float RAmpI){
-  
-  //float c1 = 334.33;   // this needs to be moved up in the initial definitions.
-  float c2 = 3.01;
-  float c3 = 15.01;
-  float c4 = 12.0;
-  
-  analogReference(DEFAULT);
-  //float currentReadingmA = (-1*polar)*(((float)analogRead(iPin) * 5.0 / 1024.0) - refV * 334.33 * (3.01 / 15.01)) / (334.33 * (12.0 / 15.01));
-  float currentReadingmA = (-1*polar)*(((float)analogRead(iPin) * Volt / 1024.0) - refV * RAmpI * (c2 / c3)) / (RAmpI * (c4 / c3));
-  analogReference(DEFAULT);
-  return currentReadingmA;
-}
-
-
-void resetVOpAmp() {
-  
-  int reset = dacWrite(B10000000, B00000000);  // reset output voltage
-  
-  // set op amp negative terminal voltage to 0.027 V
-  // (+/-250mA output from 0V to 1V):
-  //int vOpAmp = dacWrite (B10010000, B01011001);
- 
-  // for lower current threshold:
-  int vOpAmp = dacWrite(B10010000, B00011011);
-  
-  //set op amp negative terminal voltage to 1V 
-//int vOpAmp = dacWrite(B10010011, B11101000);
-
-}
-
-
+     
 
 ////////////////////////////////////////////////////
 // Routine for Transistor Control for amplification   
@@ -2227,7 +2181,6 @@ void TRselect(int t1, int t2, int t3) {
     RAmpI = RAi[2];}     
     
 }
-
 
   ///////////////////////////////////////////
  // Check for correct amplification resistor
@@ -2260,12 +2213,12 @@ void TRselect(int t1, int t2, int t3) {
   // define current and voltage variables:
   float current = 0.0;
   float deviceVoltage = 0.0;
-  int sweep = 0; //voltage sweep function
+  //int sweep = 0; //voltage sweep function
     
   highEight = channelV | (byte) ((3840 & ((int)startVLevelFloat)) >> 8);
   lowEight = (byte) 255 & startVLevel;
     
-  sweep = dacWrite(highEight, lowEight);
+  dacWrite(highEight, lowEight);
     
   int ip=fp;
   for (int i=0; i<numCell; i++)
@@ -2298,3 +2251,59 @@ void TRselect(int t1, int t2, int t3) {
 
  //////////////////////////////////////////   
 #endif
+
+
+//////////////////////////////////////////////////////////////
+//FUNCTIONS for DAC control (IVy)
+//////////////////////////////////////////////////////////////
+
+/*Define write function for DAC */
+void dacWrite(byte highbyte, byte lowbyte) {
+  // take the CS pin low to select the chip:
+  digitalWrite(CS,LOW);
+  delay(10);
+  //  send in the address and value via SPI:
+  SPI.transfer(highbyte);
+  SPI.transfer(lowbyte);
+  delay(10);
+  // take the CS pin high to de-select the chip:
+  digitalWrite(CS,HIGH);
+}
+
+float currentRead(int iPin, float Volt, int polar, float RAmpI){
+  
+  //float c1 = 334.33;   // this is now in the initial definitions. This is now called RAmpI
+  float c2 = 3.01;
+  float c3 = 15.01;
+  float c4 = 12.0;
+  
+  analogReference(DEFAULT);
+  //float currentReadingmA = (-1*polar)*(((float)analogRead(iPin) * 5.0 / 1024.0) - refV * 334.33 * (3.01 / 15.01)) / (334.33 * (12.0 / 15.01));
+  float currentReadingmA = (-1*polar)*(((float)analogRead(iPin) * Volt / 1024.0) - refV * RAmpI * (c2 / c3)) / (RAmpI * (c4 / c3));
+  analogReference(DEFAULT);
+  return currentReadingmA;
+}
+
+
+void resetVOpAmp() {
+
+  dacWrite(B10000000, B00000000);  // reset output voltage
+  
+  // set op amp negative terminal voltage to 0.027 V
+  // (+/-250mA output from 0V to 1V):
+  //int vOpAmp = dacWrite (B10010000, B01011001);
+ 
+  // for lower current threshold:
+  dacWrite(B10010000, B11001000);
+  
+  //set op amp negative terminal voltage to 1V 
+  //int vOpAmp = dacWrite(B10010011, B11101000);
+  
+  
+  dacWrite(B00000000, B00000000);  // reset DACa voltage
+
+}
+
+
+
+
