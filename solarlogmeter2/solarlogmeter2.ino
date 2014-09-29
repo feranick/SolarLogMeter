@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 1.102.1 - PV IV logging 
+ v. 2.0 - PV IV logging 
  2011-2014 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -161,7 +161,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "1.102.1 - 20140828";
+String versProg = "2.0 - 20140929";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -234,7 +234,7 @@ float precIoc = 0.1;  // minimum current (mA) to determine Voc
 unsigned long restTime = 12;  //Time in between IV scans (minutes)
 unsigned int delayTime = 10; // Generic time delay (ms). Fallback in case no SD card is found.
 
-float refV = 0.024;
+float refV = 0.312;
 float startV = 0.0;
 float stopV = 4.096;  //This is set by default as a fallback in case no SD card is found.
 
@@ -2316,7 +2316,7 @@ void resetVOpAmp() {
   //int vOpAmp = dacWrite (B10010000, B01011001);
  
   // for lower current threshold:
-  dacWrite(B10010000, B11001000);
+  dacWrite(B10010001, B00101100);
   
   //set op amp negative terminal voltage to 1V 
   //int vOpAmp = dacWrite(B10010011, B11101000);
