@@ -161,7 +161,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "2.0 - 20140929";
+String versProg = "2.0 - 20141001";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -454,11 +454,8 @@ void setup()
   }
 
 #ifdef TIMECAL
-  else
-  {
     rtc.adjust(DateTime(__DATE__, __TIME__));
     Serial.println("RTC is syncing!");
-  }
 #endif
 
   //----------------------------------------  
