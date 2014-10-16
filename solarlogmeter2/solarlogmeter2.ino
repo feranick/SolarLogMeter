@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 2.0 - PV IV logging 
+ v. 2.0.1 - PV IV logging 
  2011-2014 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -161,7 +161,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "2.0 - 20141001";
+String versProg = "2.0.1 - 20141008";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -203,7 +203,8 @@ float RAmpI = 67.4; //Change this only when MULTIR is disabled (single amplifica
 int voltIN[]={0,0,0,0};  
 
 // Because of the SD/RTC shield, the first available analog pin is #8
-int fp=8; 
+// However, with custom PC board, it can start at #0
+int fp=0; 
 
 float Vgain = 2.0;  // Multiplication factor for Voltage measurement (as set by IVy using either amplification or voltage divider).
 
