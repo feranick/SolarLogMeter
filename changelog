@@ -1,3 +1,5 @@
+Version 2.0.2 - 20141017: Optimized DAC parameters.
+
 Version 2.0.1 - 20141008: Starts reading from analog port 0 (rather than 8) for better integration with PCB.
 
 Version 2.0 - 20141001: Minor fix in RTClib
