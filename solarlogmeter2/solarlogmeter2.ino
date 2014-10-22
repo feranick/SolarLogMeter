@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 2.0.2 - PV IV logging 
+ v. 2.1 - PV IV logging 
  2011-2014 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -161,7 +161,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "2.0.2 - 20141017";
+String versProg = "2.1 - 20141022";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -185,6 +185,8 @@ float northOrSouth = 180;
 
 void(* resetFunc) (void) = 0; //declare reset function @ address 0
 int numCell = 1;        // Max number of cells to be measured
+
+float currentOffset = 0.0;  // Offset in current measurement
 
  // resistor for current measurement A.
 float Ri[] = {0.1, 0.1, 0.1, 0.1}; 
@@ -235,7 +237,7 @@ float precIoc = 0.1;  // minimum current (mA) to determine Voc
 unsigned long restTime = 12;  //Time in between IV scans (minutes)
 unsigned int delayTime = 10; // Generic time delay (ms). Fallback in case no SD card is found.
 
-float refV = 0.305;
+float refV = 0.312;
 float startV = 0.0;
 float stopV = 4.096;  //This is set by default as a fallback in case no SD card is found.
 
@@ -755,7 +757,7 @@ void ivSingle() {
   irra1=watt1;
 #endif
 
-  float V[numCell], Vi[numCell];
+  float V[numCell], Vi[numCell], Vic[numCell];
   float Voc[numCell], Ioc[numCell], Isc[numCell], Pmax[numCell], Vmax[numCell], Imax[numCell];
   
   int jmax;
@@ -769,6 +771,7 @@ void ivSingle() {
   for (int i=0; i<numCell; i++)
   { 
     Vi[i] = 0.0;
+    Vic[i] = 0.0;
     V[i]  = 0.0;
     Voc[i] = 0.0; 
     Isc[i] = 0.0;
@@ -857,12 +860,13 @@ void ivSingle() {
       
       // Current Measurement
       Vi[i] = currentRead(ip+1, maxVolt, polar, RAmpI);
+      Vic[i] = Vi[i] + currentOffset*Ri[i]/1000;
       
       delay(2);
       
-      if(Vi[i]<precIoc && Vi[i] >=0.0)
+      if(Vic[i]<precIoc && Vic[i] >=0.0)
         {Voc[i]=V[i];
-        Ioc[i]=Vi[i];}
+        Ioc[i]=Vic[i];}
       
    // if (current < currentLimit && current > (-1)*currentLimit) {
       // send comma delimited output to Processing applet
@@ -881,21 +885,21 @@ void ivSingle() {
       ip+=2;
     
       // Get Isc and extract Pmax   
-      Isc[i]=max(Isc[i],Vi[i]/Ri[i]); 
+      Isc[i]=max(Isc[i],Vic[i]/Ri[i]); 
 
-      if(Pmax[i]<=V[i]*Vi[i]*1000/Ri[i])
+      if(Pmax[i]<=V[i]*Vic[i]*1000/Ri[i])
         {
-        Pmax[i]=V[i]*Vi[i]*1000/Ri[i];
+        Pmax[i]=V[i]*Vic[i]*1000/Ri[i];
         Vmax[i]=V[i];
-        Imax[i]=Vi[i]*1000/Ri[i];
+        Imax[i]=Vic[i]*1000/Ri[i];
         jmax=level/16;
         }
   
         // write data on Serial and SD
         if(sds==true)
-          {writeIVSD(dataFile,V[i],Vi[i],Ri[i]);}
+          {writeIVSD(dataFile,V[i],Vi[i],Vic[i],Ri[i]);}
 
-        writeIVSerial(V[i],Vi[i],Ri[i]);
+        writeIVSerial(V[i],Vi[i],Vic[i],Ri[i]);
         
       }
      dataFile.println();
@@ -928,10 +932,10 @@ void ivSingle() {
 
   for (int i=0; i<numCell; i++) {
 
-    writeIVSerial(Voc[i],Ioc[i],Ri[i]);
+    writeIVSerial(Voc[i],Ioc[i]-currentOffset*Ri[i]/1000,Ioc[i],Ri[i]);
     // write data on Serial and SD
     if(sds==true)
-      {writeIVSD(dataFile,Voc[i],Ioc[i],Ri[i]);}
+      {writeIVSD(dataFile,Voc[i],Ioc[i]-currentOffset*Ri[i]/1000,Ioc[i],Ri[i]);}
   }
   
 
@@ -961,6 +965,8 @@ void ivSingle() {
 Serial.println();
   Serial.print("\"Max Voltage (V)\",");
   Serial.println(stopV);
+  Serial.print("\"Current Offset (mA)\",");
+  Serial.println(currentOffset);
   Serial.print("\"Average temperature (C)\",");
   Serial.println(T);
 #ifdef TBAR 
@@ -991,6 +997,8 @@ Serial.println();
   { dataFile.println();
     dataFile.print("\"Max Voltage (V)\",");
     dataFile.println(stopV);
+    dataFile.print("\"Current Offset (mA)\",");
+    dataFile.println(currentOffset);
     dataFile.print("\"Average temperature (C)\",");
     dataFile.println(T);
 #ifdef TBAR
@@ -1043,39 +1051,6 @@ Serial.println();
 }
 
 
-/////////////////////////////////////////////////
-// Measure and save temperature 
-// To be used with Vishay NTCLE100E3 thermistor
-/////////////////////////////////////////////////
-
-#ifdef TBAR
-#else
-float TC()
-{ //Using the SteinhartHart formula
-  // These values are specific for the thermistor, and it should customized for the thermistor used.
-  // These values are for the
-
-  float tc=0.0;
-  float V = avoltage(Tpin, maxVolt, 1, avNum);
-  float R = (Rtf*V)/(maxVolt-V);
-
-  float A = 3.354016e-3;
-  float B = 2.993410e-4;
-  float C = 2.135133e-6;
-  float D = -5.672000e-9;
-  float K = 8.5; // mW/dec C – dissipation factor
-  // calculate temperature
-  float logR  = log(R/Rtt);
-  float logR2 = logR * logR;
-  float logR3 = logR * logR * logR;
-  float devT = -1.5;  //deviation from formula. Value for T up to 35C
-  //float devT = -2;  //deviation from formula. Value for T from 35 to 50C
-
-  tc= (1.0/(A+B*logR+C*logR2+D*logR3))-V*V*1000/(K*R)-273.3+devT;   //in K
-  return tc;
-}
-#endif
-
 
 //////////////////////////////////////////////
 // Stamp data on Serial port
@@ -1105,12 +1080,14 @@ void writeDateSerial(){
   Serial.print("\"");
 }
 
-void writeIVSerial(float V, float Vi, float Ri){
+void writeIVSerial(float V, float Vi, float Vic, float Ri){
 
   Serial.print(",");    
   Serial.print(V*1000);
   Serial.print(","); 
   Serial.print(Vi*1000/Ri);
+  Serial.print(","); 
+  Serial.print(Vic*1000/Ri);
 }
 
 //////////////////////////////////////////////
@@ -1140,12 +1117,14 @@ void writeDateSD(File dataFile){
 
 }
 
-void writeIVSD(File dataFile, float V, float Vi, float Ri){
+void writeIVSD(File dataFile, float V, float Vi, float Vic, float Ri){
 
   dataFile.print(",");       
   dataFile.print(V*1000);
   dataFile.print(","); 
   dataFile.print(Vi*1000/Ri);
+  dataFile.print(","); 
+  dataFile.print(Vic*1000/Ri);
 }
 
 ///////////////////////////////////////////
@@ -1162,10 +1141,10 @@ void header(){
   for (int i=0; i<numCell; i++)
   {
     Serial.print(",\"V");
-    //Serial.print(i);
-    //Serial.print(" (V)\",\"V");
     Serial.print(i);
     Serial.print(" (mV)\",\"I");
+    Serial.print(i);
+    Serial.print(" (mA)\",\"Icorr");
     Serial.print(i);
     Serial.print(" (mA)\"");
   }    
@@ -1189,6 +1168,9 @@ void headerSD(File dataFile){
   dataFile.print("\",\"");
   dataFile.print(versProg);
   dataFile.println("\"");
+  dataFile.print("\"Current offset:\",");
+  dataFile.print(currentOffset);
+  dataFile.println();
   dataFile.print("\"#\",");
   if(DST==0)
     {dataFile.print("\"time (SDT)\",\"date\"");}
@@ -1199,6 +1181,8 @@ void headerSD(File dataFile){
     dataFile.print(",\"V");
     dataFile.print(i);
     dataFile.print(" (mV)\",\"I");
+    dataFile.print(i);
+    dataFile.print(" (mA)\",\"Icorr");
     dataFile.print(i);
     dataFile.print(" (mA)\"");
   } 
@@ -1295,6 +1279,9 @@ void analysisHeaderSD() {
     dataFile.print("\",\"");
     dataFile.print(versProg);
     dataFile.println("\"");
+    dataFile.print("\"Current offset:\",");
+    dataFile.print(currentOffset);
+    dataFile.println();
     dataFile.print("\"Date\",");
     dataFile.print("\"Time (SDT)\",");
     dataFile.print("\"Voc (V)\",");
@@ -1445,6 +1432,7 @@ void Pref(){
     Serial.println("Configuration file found.");
     
     numCell = value(myFile);     // number of cells
+    currentOffset = valuef(myFile);   // Offset in current measurement
     stopV = valuef(myFile);     // Max Voltage measured (stopV)
     restTime = value(myFile);    // time in between IV scans (msecs)
     avNum = value(myFile);       // number of averages
@@ -1470,7 +1458,8 @@ void Pref(){
     Serial.print(cfgFile);
     Serial.println("\"");
 
-    myFile.println(numCell);    // number of cells   
+    myFile.println(numCell);    // number of cells
+    myFile.println(currentOffset);  // Offset in current measurement   
     myFile.println(stopV);      // Max Voltage measured (stopV)
     myFile.println(restTime);   // time in between IV scans (minutes)
     myFile.println(avNum);      // number of averages
@@ -1595,6 +1584,9 @@ void NowSerial(){
   Serial.print("Max Voltage: ");
   Serial.print(stopV);
   Serial.println(" V");
+  Serial.print("Current offset: ");
+  Serial.print(currentOffset);
+  Serial.println(" mA");
   
   Serial.print("T = ");
 #ifdef TBAR
@@ -2262,6 +2254,40 @@ void TRselect(int t1, int t2, int t3) {
 #endif
 
 
+/////////////////////////////////////////////////
+// Measure and save temperature 
+// To be used with Vishay NTCLE100E3 thermistor
+/////////////////////////////////////////////////
+
+#ifdef TBAR
+#else
+float TC()
+{ //Using the SteinhartHart formula
+  // These values are specific for the thermistor, and it should customized for the thermistor used.
+  // These values are for the
+
+  float tc=0.0;
+  float V = avoltage(Tpin, maxVolt, 1, avNum);
+  float R = (Rtf*V)/(maxVolt-V);
+
+  float A = 3.354016e-3;
+  float B = 2.993410e-4;
+  float C = 2.135133e-6;
+  float D = -5.672000e-9;
+  float K = 8.5; // mW/dec C – dissipation factor
+  // calculate temperature
+  float logR  = log(R/Rtt);
+  float logR2 = logR * logR;
+  float logR3 = logR * logR * logR;
+  float devT = -1.5;  //deviation from formula. Value for T up to 35C
+  //float devT = -2;  //deviation from formula. Value for T from 35 to 50C
+
+  tc= (1.0/(A+B*logR+C*logR2+D*logR3))-V*V*1000/(K*R)-273.3+devT;   //in K
+  return tc;
+}
+#endif
+
+
 //////////////////////////////////////////////////////////////
 //FUNCTIONS for DAC control (IVy)
 //////////////////////////////////////////////////////////////
@@ -2315,7 +2341,6 @@ void resetVOpAmp() {
  
   // for lower current threshold:
   dacWrite(B10010001, B00101100);
-  //dacWrite(B10010000, B00011001);
   
   //set op amp negative terminal voltage to 1V 
   //int vOpAmp = dacWrite(B10010011, B11101000);

@@ -1,3 +1,5 @@
+Version 2.1 - 20141022: Introduced soft parameter for current offset (it’s saved as the second parameter in SD cards). Warning: the SLM.CFG needs to be updated for this version (or removed, a new one is created automatically).
+
 Version 2.0.2 - 20141017: Optimized DAC parameters.
 
 Version 2.0.1 - 20141008: Starts reading from analog port 0 (rather than 8) for better integration with PCB.
