@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 2.1 - PV IV logging 
+ v. 2.2 - PV IV logging 
  2011-2014 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -161,7 +161,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "2.1 - 20141022";
+String versProg = "2.2 - 20141022";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -757,7 +757,7 @@ void ivSingle() {
   irra1=watt1;
 #endif
 
-  float V[numCell], Vi[numCell], Vic[numCell];
+  float V[numCell], I[numCell], Ic[numCell];
   float Voc[numCell], Ioc[numCell], Isc[numCell], Pmax[numCell], Vmax[numCell], Imax[numCell];
   
   int jmax;
@@ -770,9 +770,9 @@ void ivSingle() {
   //Setup for Isc, Pmax
   for (int i=0; i<numCell; i++)
   { 
-    Vi[i] = 0.0;
-    Vic[i] = 0.0;
-    V[i]  = 0.0;
+    V[i] = 0.0;
+    I[i] = 0.0;
+    Ic[i]  = 0.0;
     Voc[i] = 0.0; 
     Isc[i] = 0.0;
     Ioc[i] = 0.0;
@@ -859,14 +859,14 @@ void ivSingle() {
       delay(2);
       
       // Current Measurement
-      Vi[i] = currentRead(ip+1, maxVolt, polar, RAmpI);
-      Vic[i] = Vi[i] + currentOffset*Ri[i]/1000;
+      I[i] = currentRead(ip+1, maxVolt, polar, RAmpI)*1000/Ri[i]; //in mA
+      Ic[i] = I[i] + currentOffset;
       
       delay(2);
       
-      if(Vic[i]<precIoc && Vic[i] >=0.0)
+      if(Ic[i]<precIoc && Ic[i] >=0.0)
         {Voc[i]=V[i];
-        Ioc[i]=Vic[i];}
+        Ioc[i]=Ic[i];}
       
    // if (current < currentLimit && current > (-1)*currentLimit) {
       // send comma delimited output to Processing applet
@@ -885,21 +885,21 @@ void ivSingle() {
       ip+=2;
     
       // Get Isc and extract Pmax   
-      Isc[i]=max(Isc[i],Vic[i]/Ri[i]); 
+      Isc[i]=max(Isc[i],Ic[i]); 
 
-      if(Pmax[i]<=V[i]*Vic[i]*1000/Ri[i])
+      if(Pmax[i]<=V[i]*Ic[i])
         {
-        Pmax[i]=V[i]*Vic[i]*1000/Ri[i];
+        Pmax[i]=V[i]*Ic[i];
         Vmax[i]=V[i];
-        Imax[i]=Vic[i]*1000/Ri[i];
+        Imax[i]=Ic[i];
         jmax=level/16;
         }
   
         // write data on Serial and SD
         if(sds==true)
-          {writeIVSD(dataFile,V[i],Vi[i],Vic[i],Ri[i]);}
+          {writeIVSD(dataFile,V[i],I[i],Ic[i]);}
 
-        writeIVSerial(V[i],Vi[i],Vic[i],Ri[i]);
+        writeIVSerial(V[i],I[i],Ic[i]);
         
       }
      dataFile.println();
@@ -932,10 +932,10 @@ void ivSingle() {
 
   for (int i=0; i<numCell; i++) {
 
-    writeIVSerial(Voc[i],Ioc[i]-currentOffset*Ri[i]/1000,Ioc[i],Ri[i]);
+    writeIVSerial(Voc[i],Ioc[i]-currentOffset,Ioc[i]);
     // write data on Serial and SD
     if(sds==true)
-      {writeIVSD(dataFile,Voc[i],Ioc[i]-currentOffset*Ri[i]/1000,Ioc[i],Ri[i]);}
+      {writeIVSD(dataFile,Voc[i],Ioc[i]-currentOffset,Ioc[i]);}
   }
   
 
@@ -1080,14 +1080,14 @@ void writeDateSerial(){
   Serial.print("\"");
 }
 
-void writeIVSerial(float V, float Vi, float Vic, float Ri){
+void writeIVSerial(float V, float I, float Ic){
 
   Serial.print(",");    
   Serial.print(V*1000);
   Serial.print(","); 
-  Serial.print(Vi*1000/Ri);
+  Serial.print(I);
   Serial.print(","); 
-  Serial.print(Vic*1000/Ri);
+  Serial.print(Ic);
 }
 
 //////////////////////////////////////////////
@@ -1117,14 +1117,14 @@ void writeDateSD(File dataFile){
 
 }
 
-void writeIVSD(File dataFile, float V, float Vi, float Vic, float Ri){
+void writeIVSD(File dataFile, float V, float I, float Ic){
 
   dataFile.print(",");       
   dataFile.print(V*1000);
   dataFile.print(","); 
-  dataFile.print(Vi*1000/Ri);
+  dataFile.print(I);
   dataFile.print(","); 
-  dataFile.print(Vic*1000/Ri);
+  dataFile.print(Ic);
 }
 
 ///////////////////////////////////////////
