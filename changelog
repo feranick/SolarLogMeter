@@ -1,3 +1,5 @@
+Version 2.3 - 20141023: Introduced SPI clock divider to slow signal transmission to DAC through protecting diodes.
+
 Version 2.2 - 20141022: Cleanup of current variables. Current variables are defined immediately as such after acquisition, no through their voltage (and conversion later).
 
 Version 2.1 - 20141022: Introduced soft parameter for current offset (it’s saved as the second parameter in SD cards). Warning: the SLM.CFG needs to be updated for this version (or removed, a new one is created automatically).

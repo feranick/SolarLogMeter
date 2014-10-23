@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 2.2 - PV IV logging 
+ v. 2.3 - PV IV logging 
  2011-2014 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -105,10 +105,22 @@
 #include "RTClib.h"
 #include "SLMtypes.h" 
 
+//----------------------------------------------------------------------------
+// Define divider of the SPI clock from the system clock.
+// Default SPI clock (4MHz): "SPI_CLOCK_DIV4"
+// For example: 
+// "SPI_CLOCK_DIV2" sets the SPI clock to 1/2 of the system clock, twice the SPI clock 
+// "SPI_CLOCK_DIV128" sets the SPI clock to 1/128 the system clock.
+// Available dividers: 2, 4, 8, 16 (recommended), 32, 64, 128 
+// (Change the last digits in the SPI_divider definition below)
+// Comment SPIsetClock and SPI_divider to disable divider  
+//----------------------------------------------------------------------------
+#define SPIsetClock
+#define SPI_divider SPI_CLOCK_DIV16
+
 //--------------------------------------------------------------------------------
 // Uncomment for use with Arduino DUE
 //--------------------------------------------------------------------------------
-
 //#define ArDUE
 
 //--------------------------------------------------------------------------------
@@ -117,21 +129,18 @@
 // Adafruit SD shields and modules: pin 10 (also change MEGA_SOFT_SPI from 0 to 1
 // Sparkfun SD shield: pin 8
 //---------------------------------------------------------------------------------
-
 #define SDshield 10 
 
 //-------------------------------------------------
 // Type of temperature measurement system used.
 //  Comment for thermistor, uncomment for barometer
 //-------------------------------------------------
-
 #define TBAR 
 
 //--------------------------------------------------
 // Irradiance Measurement
 // Comment to deactivate, uncomment to activate
 //--------------------------------------------------
-
 //#define IRR
 
 //-------------------------------------------------------------------------------
@@ -161,7 +170,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "2.2 - 20141022";
+String versProg = "2.3 - 20141023";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -415,11 +424,14 @@ void setup()
    Serial.println("Variable Amplification on current measurement enabled");
 #endif
 
-  //----------------------------------------
-  // initialize SPI:
-  //----------------------------------------
-  SPI.begin(); 
-
+  //----------------------------------------------
+  // initialize SPI: (and reduce SPI clock speed)
+  //----------------------------------------------
+  SPI.begin();
+ 
+#ifdef SPIsetClock  
+  SPI.setClockDivider(SPI_divider);
+#endif
   //----------------------------------------
   //Initialize reference voltage
   //----------------------------------------
