@@ -1,3 +1,5 @@
+Version 2.4 - 20141030: Added option (flag in SD) to automatically start acquisition at boot. Minor bug fixes.
+
 Version 2.3 - 20141023: Introduced SPI clock divider to slow signal transmission to DAC through protecting diodes.
 
 Version 2.2 - 20141022: Cleanup of current variables. Current variables are defined immediately as such after acquisition, no through their voltage (and conversion later).

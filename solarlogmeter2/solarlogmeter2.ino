@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 2.3 - PV IV logging 
+ v. 2.4 - PV IV logging 
  2011-2014 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -165,14 +165,27 @@
 //--------------------------------------------------------------------
 //#define MULTIR
 
+//--------------------------------------------------------------------
+//  Hard keys (external) for starting acquisition.
+//  Comment to disable hard buttons
+//--------------------------------------------------------------------
+//#define HARDKEYS
+
 //------------------
 // Name and version 
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "2.3 - 20141023";
+String versProg = "2.4 - 20141030";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
+
+
+//-------------------------------
+// Boot mode
+//-------------------------------
+
+int bootMode = 1;    // set if automatic acquisition (0) or manual through serial commands (1)    
 
 //-------------------------------
 // Time and Location variables 
@@ -572,19 +585,7 @@ void setup()
   //----------------------------------------------------------- 
   blinkLED(GLED, numCell, 100);
 
-  //----------------------------------------  
-  // Print Serial menu 
-  //----------------------------------------  
-  Serial.println("---------------------------------------------------------------------------");
-  Serial.println("SELECT FROM THE FOLLOWING OPTIONS:");
-  Serial.println("1: Collect single IV - 2: Collect sequence IV - 3: Stop sequence IV");
-  Serial.println("4: Start writing data on SD - 5: Stop writing data on SD");
-  Serial.println("6: Stamp loaction/time/date/solar info - 0: Reset");
-  Serial.println("---------------------------------------------------------------------------");
-
-  Serial.println();  
-
-  delay(50);
+  serialMenu();
 
   if(sd==true)
   {
@@ -597,116 +598,140 @@ void setup()
 ///////////////////////////////////////////////////////////
 
 void loop()
-{// Accept input from serial 
-  int inSerial = 0;    // variable for serial input
-  int inSerial2 = 0;    // variable for serial input
+{ if(bootMode == 1) {
+  
+    // Accept input from serial 
+    int inSerial = 0;    // variable for serial input
+    int inSerial2 = 0;    // variable for serial input
 
-  if (Serial.available() > 0) {
-    inSerial = Serial.read();
+    if (Serial.available() > 0) {
+      inSerial = Serial.read();
 
-    //Start (4) / stop (5) writing to SD 
-    if(sd==true){
-      if(inSerial==52)
+      //Start (4) / stop (5) writing to SD 
+      if(sd==true){
+        if(inSerial==52)
 
+        {
+          sds=true;
+          //headerSD();
+          Serial.println("Starting data logging into SD card...");
+        }
+        if(inSerial==53)  
+        {
+          sds=false;
+          Serial.println("Stopping data logging into SD card...");
+        }
+      }
+
+      //start acquiring IV (1): Single  - (2): Sequence start - (3): sequence stop
+      if(inSerial==49)
+      { 
+        Serial.println("Collecting Single IV");
+        ivSingle();
+        serialMenu();
+       }
+
+      if(inSerial==50)
+      {        
+        Serial.println("Collecting Sequence IV");
+        inSerial2 = 0;
+
+        while(inSerial2!=51)
+        {
+          inSerial2=Serial.read(); 
+          ivSingle();
+
+          Serial.print("Next IV sequence in: ");
+          Serial.print(restTime);
+          Serial.println(" minutes");
+          delay(restTime*60*1000);
+        }
+        Serial.println("Stopping collection IV sequence"); 
+      }
+
+      // Print date/time/weather info (6)
+      if(inSerial==54)  
       {
+        NowSerial();
+      }
+
+      // Reset device (0)
+      if(inSerial==48)  
+      {
+        Serial.println("Resetting device");
+        Serial.println();
+        resetFunc();
+      }
+    }
+  
+  /////////////////////////////////////////
+  // Enable hardware starting buttons
+  /////////////////////////////////////////
+  
+#ifdef HARDKEYS
+    singleIVbtn = digitalRead(singleIVPin);
+    multiIVbtn = digitalRead(multiIVPin);
+
+    // check if the pushbutton is pressed.
+    // if it is, the buttonState is HIGH:
+    if (singleIVbtn == HIGH) {    
+    // turn LED on:    
+
+      blinkLED(GLED, 1, 500);
+      blinkLED(RLED, 2, 500);
+
+      sds=true;
+      //headerSD();
+      Serial.println("Starting data logging into SD card...");
+      ivSingle();
+      blinkLED(RLED, 3, 500);
+    }
+
+    if (multiIVbtn == HIGH) { 
+      blinkLED(GLED, 2, 200); 
+      while(stopIVbtn != HIGH){
+
         sds=true;
         //headerSD();
         Serial.println("Starting data logging into SD card...");
-      }
-      if(inSerial==53)  
-      {
-        sds=false;
-        Serial.println("Stopping data logging into SD card...");
-      }
-    }
-
-    //start acquiring IV (1): Single  - (2): Sequence start - (3): sequence stop
-    if(inSerial==49)
-    { 
-      Serial.println("Collecting Single IV");
-      ivSingle();
-    }
-
-    if(inSerial==50)
-    {        
-      Serial.println("Collecting Sequence IV");
-      inSerial2 = 0;
-
-      while(inSerial2!=51)
-      {
-        inSerial2=Serial.read(); 
+        blinkLED(RLED, 2, 500);
         ivSingle();
 
+        blinkLED(RLED, 3, 500);
+        delay(100);  
+        stopIVbtn = digitalRead(stopIVPin);
         Serial.print("Next IV sequence in: ");
         Serial.print(restTime);
         Serial.println(" minutes");
         delay(restTime*60*1000);
       }
-      Serial.println("Stopping collection IV sequence"); 
-    }
-
-    // Print date/time/weather info (6)
-    if(inSerial==54)  
-    {
-      NowSerial();
-    }
-
-    // Reset device (0)
-    if(inSerial==48)  
-    {
-      Serial.println("Resetting device");
-      Serial.println();
-      resetFunc();
-    }
 
 
-  }
-  /////////////////////////////////////////
-  singleIVbtn = digitalRead(singleIVPin);
-  multiIVbtn = digitalRead(multiIVPin);
-
-  // check if the pushbutton is pressed.
-  // if it is, the buttonState is HIGH:
-  if (singleIVbtn == HIGH) {    
-    // turn LED on:    
-
-    blinkLED(GLED, 1, 500);
-    blinkLED(RLED, 2, 500);
-
-    sds=true;
-    //headerSD();
-    Serial.println("Starting data logging into SD card...");
-    ivSingle();
-    blinkLED(RLED, 3, 500);
-  }
-
-  if (multiIVbtn == HIGH) { 
-    blinkLED(GLED, 2, 200); 
-    while(stopIVbtn != HIGH){
-
-      sds=true;
+      blinkLED(GLED, 3, 200);
+      stopIVbtn=0;
+      sds=false;
       //headerSD();
-      Serial.println("Starting data logging into SD card...");
-      blinkLED(RLED, 2, 500);
-      ivSingle();
+      Serial.println("Stopping data logging into SD card...");
 
-      blinkLED(RLED, 3, 500);
-      delay(100);  
-      stopIVbtn = digitalRead(stopIVPin);
-      Serial.print("Next IV sequence in: ");
-      Serial.print(restTime);
-      Serial.println(" minutes");
-      delay(restTime*60*1000);
     }
+#endif
+}
 
+ else {
+      Serial.println("Starting data logging into SD card...");
+      sds = true;
+      
+      while(bootMode == 0) {
+          ivSingle();
 
-    blinkLED(GLED, 3, 200);
-    stopIVbtn=0;
-    sds=false;
-    //headerSD();
-    Serial.println("Stopping data logging into SD card...");
-
+          Serial.print("Next IV sequence in: ");
+          Serial.print(restTime);
+          Serial.println(" minutes");
+          delay(restTime*60*1000);
+        }    
+      
   }
+
 
 }
 
@@ -1002,8 +1027,7 @@ Serial.println();
    Serial.println(longitude);
    Serial.print("\"Time zone\",");
    Serial.println(timezone);
-  Serial.println();
-  
+   Serial.println();
   
   if(sds==true)
   { dataFile.println();
@@ -1062,7 +1086,22 @@ Serial.println();
   }
 }
 
+ //----------------------------------------  
+  // Print Serial menu 
+  //----------------------------------------  
+  
+void serialMenu(){  
+  Serial.println("---------------------------------------------------------------------------");
+  Serial.println("SELECT FROM THE FOLLOWING OPTIONS:");
+  Serial.println("1: Collect single IV - 2: Collect sequence IV - 3: Stop sequence IV");
+  Serial.println("4: Start writing data on SD - 5: Stop writing data on SD");
+  Serial.println("6: Stamp loaction/time/date/solar info - 0: Reset");
+  Serial.println("---------------------------------------------------------------------------");
 
+  Serial.println();  
+
+  delay(50);
+}
 
 //////////////////////////////////////////////
 // Stamp data on Serial port
@@ -1273,7 +1312,7 @@ void analysisSerial(int i, float V, float I, float V1, float I1, float P1, float
   Serial.print(",");
   Serial.print(sPos.altitude);
   Serial.println();
-  // Serial.println();
+  Serial.println();
 
 }
 
@@ -1443,6 +1482,7 @@ void Pref(){
   if (myFile) {
     Serial.println("Configuration file found.");
     
+    bootMode = value(myFile);       // set if automatic acquisition (0) or manual through serial commands (1)
     numCell = value(myFile);     // number of cells
     currentOffset = valuef(myFile);   // Offset in current measurement
     stopV = valuef(myFile);     // Max Voltage measured (stopV)
@@ -1470,6 +1510,7 @@ void Pref(){
     Serial.print(cfgFile);
     Serial.println("\"");
 
+    myFile.println(bootMode);
     myFile.println(numCell);    // number of cells
     myFile.println(currentOffset);  // Offset in current measurement   
     myFile.println(stopV);      // Max Voltage measured (stopV)
@@ -1677,7 +1718,7 @@ void bmp085Calibration()
     mc = bmp085ReadInt(0xBC);
     md = bmp085ReadInt(0xBE);
   }
-  Serial.println();
+  //Serial.println();
 }
 
 // Calculate temperature given ut.
