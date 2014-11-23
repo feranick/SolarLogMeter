@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 2.4 - PV IV logging 
+ v. 2.6 - PV IV logging 
  2011-2014 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -176,7 +176,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "2.4 - 20141030";
+String versProg = "2.6 - 20141120";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -194,7 +194,7 @@ int bootMode = 1;    // set if automatic acquisition (0) or manual through seria
 float latitude = 42.359757;        // MIT - Cambridge, MA - USA
 float longitude = -71.093559;      // MIT - Cambridge, MA - USA
 float timezone = -5;               // from GMT
-int DST= 1;                        // Daylight Saving Time: 0-NO, 1-YES.
+int DST= 0;                        // Daylight Saving Time: 0-NO, 1-YES.
 
   //If you live in the southern hemisphere, it would probably be easier
   //for you if you make north as the direction where the azimuth equals
@@ -219,7 +219,7 @@ float RAi[] = {67.4, 67.4, 67.4};
 #endif
 
 // This used to be called c1.
-float RAmpI = 67.4; //Change this only when MULTIR is disabled (single amplification resistor, no transistor switching). 
+float RAmpI = 20.066; //Change this only when MULTIR is disabled (single amplification resistor, no transistor switching). 
 
 
 // Applies the correction to the input voltage for a particular cell is the voltage divider is present (0), 
@@ -255,11 +255,11 @@ int TR3 = 7;    // digital pin for analog out for Amplification resistor R3.
 // IVy specific variables
 /////////////////////////////////
 
-float precIoc = 0.1;  // minimum current (mA) to determine Voc
+float precIoc = 4.0;  // minimum current (mA) to determine Voc
 unsigned long restTime = 12;  //Time in between IV scans (minutes)
 unsigned int delayTime = 10; // Generic time delay (ms). Fallback in case no SD card is found.
 
-float refV = 0.312;
+float refV = 1.0;
 float startV = 0.0;
 float stopV = 4.096;  //This is set by default as a fallback in case no SD card is found.
 
@@ -1076,11 +1076,11 @@ Serial.println();
 
   for (int i=0; i<numCell; i++) {
 
-    analysisSerial(i, Voc[i], Isc[i]*1000, Vmax[i], Imax[i], Pmax[i], Vmax[i]*Imax[i]/(Voc[i]*Isc[i]*1000), jmax, T, P, irra0, irra1, now);
+    analysisSerial(i, Voc[i], Isc[i], Vmax[i], Imax[i], Pmax[i], Vmax[i]*Imax[i]/(Voc[i]*Isc[i]*1000), jmax, T, P, irra0, irra1, now);
 
     if(sds==true)
     { File dataFile1 = SD.open(nameFileA[i], FILE_WRITE);
-      analysisSD(dataFile1, i, Voc[i], Isc[i]*1000, Vmax[i], Imax[i], Pmax[i], Vmax[i]*Imax[i]/(Voc[i]*Isc[i]*1000), jmax, T, P, irra0, irra1, now);
+      analysisSD(dataFile1, i, Voc[i], Isc[i], Vmax[i], Imax[i], Pmax[i], Vmax[i]*Imax[i]/(Voc[i]*Isc[i]*1000), jmax, T, P, irra0, irra1, now);
      dataFile1.close();
     } 
   }
@@ -1111,14 +1111,15 @@ void writeDateSerial(){
   // digital clock display of the time
   now = rtc.now();
   Serial.print("\"");
-  Serial.print(now.month(), DEC );
-  Serial.print("-");
-  Serial.print(now.day(),DEC );
-  Serial.print("-");
-  Serial.print(now.year(), DEC);
-  Serial.print("\"");
+  Serial.print(now.year(), DEC );
+  Serial.print("/");
+  Serial.print(now.month(),DEC );
+  Serial.print("/");
+  Serial.print(now.day(), DEC);
+  //Serial.print("\"");
   //Serial.print(" ");     // for regular serial
-  Serial.print(",\"");      // for csv 
+  //Serial.print(",\"");      // for csv 
+  Serial.print("-");
   Serial.print(now.hour(),DEC);
   Serial.print(":");
   if(now.minute() < 10)
@@ -1148,13 +1149,14 @@ void writeIVSerial(float V, float I, float Ic){
 void writeDateSD(File dataFile){
   now = rtc.now();
   dataFile.print("\"");
-  dataFile.print(now.month(), DEC);
-  dataFile.print("-");
-  dataFile.print(now.day(), DEC);
-  dataFile.print("-");
   dataFile.print(now.year(), DEC);
-  dataFile.print("\"");
-  dataFile.print(",\"");      // for csv
+  dataFile.print("/");
+  dataFile.print(now.month(), DEC);
+  dataFile.print("/");
+  dataFile.print(now.day(), DEC);
+  //dataFile.print("\"");
+  //dataFile.print(",\"");      // for csv
+  dataFile.print("-");
   dataFile.print(now.hour(), DEC);
   dataFile.print(":");
   if(now.minute() < 10)
@@ -1186,9 +1188,9 @@ void header(){
   Serial.println();
   Serial.print("\"#\",");
   if(DST==0)
-    {Serial.print("\"time (SDT)\",\"date\"");}
+    {Serial.print("\"Date-Time (ST)\"");}
   else 
-    {Serial.print("\"time (DST)\",\"date\"");}
+    {Serial.print("\"Date-Time (DST)\"");}
   for (int i=0; i<numCell; i++)
   {
     Serial.print(",\"V");
@@ -1224,9 +1226,9 @@ void headerSD(File dataFile){
   dataFile.println();
   dataFile.print("\"#\",");
   if(DST==0)
-    {dataFile.print("\"time (SDT)\",\"date\"");}
+    {dataFile.print("\"Date-Time (ST)\"");}
   else 
-    {dataFile.print("\"time (DST)\",\"date\"");}
+    {dataFile.print("\"Date-Time (DST)\"");}
   for (int i=0; i<numCell; i++)
   {
     dataFile.print(",\"V");
@@ -1333,8 +1335,10 @@ void analysisHeaderSD() {
     dataFile.print("\"Current offset:\",");
     dataFile.print(currentOffset);
     dataFile.println();
-    dataFile.print("\"Date\",");
-    dataFile.print("\"Time (SDT)\",");
+    if(DST==0)
+      dataFile.print("\"Date-Time (ST)\",");
+    else  
+      dataFile.print("\"Date-Time (DST)\",");
     dataFile.print("\"Voc (V)\",");
     dataFile.print("\"Isc (mA)\",");
     dataFile.print("\"Vmax (V)\",");
@@ -2360,10 +2364,11 @@ void dacWrite(byte highbyte, byte lowbyte) {
 
 float currentRead(int iPin, float Volt, int polar, float RAmpI){
   
-  //float c1 = 334.33;   // this is now in the initial definitions. This is now called RAmpI
-  float c2 = 3.01;
-  float c3 = 15.01;
-  float c4 = 12.0;
+  //float c1 = 20.066;   // this is now in the initial definitions. This is now called RAmp.  This is the value of (1+R22/R24)
+  // R22=6040 ohms, R24=301 ohms
+  float c2 = 3.01; // This is the value of R20 in Kohms
+  float c3 = 15.01; //This is the value of R20+R21 in Kohms
+  float c4 = 12.0; // This is the value of R21 in Kohms
   
 #ifdef ArDUE  // The arduino DUE only accepts the standard 3.3V.
   analogReference(AR_DEFAULT);
@@ -2392,8 +2397,8 @@ void resetVOpAmp() {
   // (+/-250mA output from 0V to 1V):
   //int vOpAmp = dacWrite (B10010000, B01011001);
  
-  // for lower current threshold:
-  dacWrite(B10010001, B00101100);
+  // for Vref=1000mV:
+  dacWrite(B10010011, B11101000);
   
   //set op amp negative terminal voltage to 1V 
   //int vOpAmp = dacWrite(B10010011, B11101000);
