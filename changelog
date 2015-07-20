@@ -1,3 +1,5 @@
+Version 3.1 - 20150720 - Updated pins for barometric sensor.
+
 Version 3.0 - 20150720 - Rest time can now be expressed in either secs or minutes in the config file in the SD card.
 
 Version 2.6 - 20141120: Several bug fixes on Voc, Isc measurements. Reformatted time/date for better integration with MatLab.  

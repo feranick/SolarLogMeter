@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 3.0 - PV IV logging 
+ v. 3.1 - PV IV logging 
  2011-2015 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -194,7 +194,7 @@ int bootMode = 1;    // set if automatic acquisition (0) or manual through seria
 float latitude = 42.359757;        // MIT - Cambridge, MA - USA
 float longitude = -71.093559;      // MIT - Cambridge, MA - USA
 float timezone = -5;               // from GMT
-int DST= 0;                        // Daylight Saving Time: 0-NO, 1-YES.
+int DST= 1;                        // Daylight Saving Time: 0-NO, 1-YES.
 
   //If you live in the southern hemisphere, it would probably be easier
   //for you if you make north as the direction where the azimuth equals
@@ -362,17 +362,17 @@ long pressure;
 // Definitions for the Barometric sensor
 //----------------------------------------
 
-// setup the TLS230R to Arduion mapping
+// setup the TLS230R to Arduino mapping
 #define TSL_FREQ_PIN 19 // output use digital pin2 for interrupt 
-#define TSL_S0       22 
-#define TSL_S1       23   
+#define TSL_S0       28 
+#define TSL_S1       26   
 #define TSL_S2       24   
-#define TSL_S3       25
+#define TSL_S3       22
 #define TSL1_FREQ_PIN 18 // output use digital pin2 for interrupt 
-#define TSL1_S0       26 
-#define TSL1_S1       27   
-#define TSL1_S2       28   
-#define TSL1_S3       29
+#define TSL1_S0       36 
+#define TSL1_S1       34   
+#define TSL1_S2       32   
+#define TSL1_S3       30
 #define READ_TM 1000 // milleseconds between frequency calculations
 
 int calcSensitivity[2];   
