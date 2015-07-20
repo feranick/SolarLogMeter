@@ -3,8 +3,8 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 2.6 - PV IV logging 
- 2011-2014 - Nicola Ferralis - ferralis@mit.edu		
+ v. 3.0 - PV IV logging 
+ 2011-2015 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
  created by Rupak Chakraborty and David Berney Needleman, MIT PV Lab.
@@ -257,6 +257,7 @@ int TR3 = 7;    // digital pin for analog out for Amplification resistor R3.
 
 float precIoc = 4.0;  // minimum current (mA) to determine Voc
 unsigned long restTime = 12;  //Time in between IV scans (minutes)
+unsigned long restTimeSec = 0;  //
 unsigned int delayTime = 10; // Generic time delay (ms). Fallback in case no SD card is found.
 
 float refV = 1.0;
@@ -643,8 +644,14 @@ void loop()
 
           Serial.print("Next IV sequence in: ");
           Serial.print(restTime);
-          Serial.println(" minutes");
-          delay(restTime*60*1000);
+          if(restTimeSec == 0) {
+            Serial.println(" minutes");
+            delay(restTime*60*1000);
+          }
+          else {
+            Serial.println(" seconds");
+          delay(restTime*1000);
+          }
         }
         Serial.println("Stopping collection IV sequence"); 
       }
@@ -702,8 +709,14 @@ void loop()
         stopIVbtn = digitalRead(stopIVPin);
         Serial.print("Next IV sequence in: ");
         Serial.print(restTime);
-        Serial.println(" minutes");
-        delay(restTime*60*1000);
+        if(restTimeSec == 0) {
+            Serial.println(" minutes");
+            delay(restTime*60*1000);
+          }
+          else {
+            Serial.println(" seconds");
+            delay(restTime*1000);
+          }
       }
 
 
@@ -726,8 +739,14 @@ void loop()
 
           Serial.print("Next IV sequence in: ");
           Serial.print(restTime);
-          Serial.println(" minutes");
-          delay(restTime*60*1000);
+          if(restTimeSec == 0) {
+            Serial.println(" minutes");
+            delay(restTime*60*1000);
+          }
+          else {
+            Serial.println(" seconds");
+            delay(restTime*1000);
+          }
         }    
       
   }
@@ -1491,6 +1510,7 @@ void Pref(){
     currentOffset = valuef(myFile);   // Offset in current measurement
     stopV = valuef(myFile);     // Max Voltage measured (stopV)
     restTime = value(myFile);    // time in between IV scans (msecs)
+    restTimeSec = value(myFile);    // unit time in between IV scans (0: min; 1: sec)
     avNum = value(myFile);       // number of averages
     delayTime = value(myFile);   // generic delay time (msecs)
     latitude = valuef(myFile);   // location latitude
@@ -1519,6 +1539,7 @@ void Pref(){
     myFile.println(currentOffset);  // Offset in current measurement   
     myFile.println(stopV);      // Max Voltage measured (stopV)
     myFile.println(restTime);   // time in between IV scans (minutes)
+    myFile.println(restTimeSec); // Unit time in between IV scans (0: min; 1: sec)
     myFile.println(avNum);      // number of averages
     myFile.println(delayTime);  // generic delay time (msecs)
     myFile.println(latitude);   // location latitude
