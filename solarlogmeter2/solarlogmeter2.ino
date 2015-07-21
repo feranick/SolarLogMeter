@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 3.1 - PV IV logging 
+ v. 3.2 - PV IV logging 
  2011-2015 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -62,13 +62,18 @@
  If using the the Adafruit Logging shield with an Arduino Mega, in the file:
  ~arduino/libraries/SD/utility/Sd2Card.h
  
- change the line: 
- #define MEGA_SOFT_SPI 0
- to 
- #define MEGA_SOFT_SPI 1
+ a. change the line: 
+    #define MEGA_SOFT_SPI 0
+    to 
+    #define MEGA_SOFT_SPI 1
+
+ b. and comment:
+
+    #define USE_SPI_LIB
+    in ~arduino/libraries/SD/utility/Sd2Card.h
+    and ~arduino/libraries/SD/utility/Sd2Card.c
  
  Do not change the other pins!
- 
  Also make sure the definition below (SDshield) is correctly set for the type of SD shield used.
  
  6. Temperature measurements:
@@ -176,7 +181,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "2.6 - 20141120";
+String versProg = "3.2 - 20150721";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 

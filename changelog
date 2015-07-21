@@ -1,3 +1,5 @@
+Version 3.2 - 20150721 - Added info on how to compile with SD support for Mega with IDE 1.6.x. Minor bug fixes.
+
 Version 3.1 - 20150720 - Updated pins for barometric sensor.
 
 Version 3.0 - 20150720 - Rest time can now be expressed in either secs or minutes in the config file in the SD card.
