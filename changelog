@@ -1,3 +1,5 @@
+Version 3.4 - 20150722 - Added info on how to compile with correct RTClib support for Arduino Intel-based boards.
+
 Version 3.3 - 20150722 - Improved compatibility with ARM32 and Intel boards. Now each ARM32 (boards Due and Zero) and Intel (Edison and Galileo) have their own flags.
 
 Version 3.2 - 20150721 - Added info on how to compile with SD support for Mega with IDE 1.6.x. Minor bug fixes.

@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 3.3 - PV IV logging 
+ v. 3.4 - PV IV logging 
  2011-2015 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -94,12 +94,22 @@
  - Number of cells (default: 1)
  - Max Voltage (default: stopV = 4.1V)
  - Time between IV scans in minutes (default: 12 minutes)
+ - Unit of Time between IV scans (default: 0: minutes)
  - Number of averages in voltage measurements (default: 80. Not used in v2)
  - Generic waiting time in millisec (default: 1000s ms)
  - Location Latitude (default: 42.36)
  - Location Longitude (default: -71.09)
  - Location Timezone from GMT (default: -5.00)  
  - Daylight Saving Time (default: 1, yes).
+
+ 10. When compiling targeting the Arduino Intel-based Galileo or Edison, in file:
+ ~arduino/libraries/RTClib/RTClib.cpp change from line 4:
+
+  #define WIRE Wire1
+
+ into: 
+
+  #define WIRE Wire
  
  //**************************************************************************************
  */
@@ -109,6 +119,14 @@
 #include <SPI.h>
 #include "RTClib.h"
 #include "SLMtypes.h" 
+
+//--------------------------------------------------------------------------------
+// Uncomment the line corresponding to the Arduino board (ARM32 and INTEL ONLY)
+// DEFAULT (all commented) is for Arduino AVR boards.
+//--------------------------------------------------------------------------------
+//#define ArARM32 // Arduino DUE, ZERO
+
+//#define ArINTEL // Arduino Galileo, Edison
 
 //----------------------------------------------------------------------------
 // Define divider of the SPI clock from the system clock.
@@ -122,14 +140,6 @@
 //----------------------------------------------------------------------------
 #define SPIsetClock
 #define SPI_divider SPI_CLOCK_DIV16
-
-//--------------------------------------------------------------------------------
-// Uncomment the line corresponding to the Arduino board (ARM32 and INTEL ONLY)
-// DEFAULT (all commented) is for Arduino AVR boards.
-//--------------------------------------------------------------------------------
-//#define ArARM32 // Arduino DUE, ZERO
-
-//#define ArINTEL // Arduino Galileo, Edison
 
 //--------------------------------------------------------------------------------
 // Change this to match your SD shield or module;
@@ -184,7 +194,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "3.2 - 20150721";
+String versProg = "3.4 - 20150722";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
