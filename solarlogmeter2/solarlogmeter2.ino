@@ -457,7 +457,7 @@ void setup()
   //----------------------------------------
   //Initialize reference voltage
   //----------------------------------------
-#ifdef ArDUE  // The arduino DUE only accepts the standard 3.3V.
+#ifdef ArARM32  // The arduino DUE only accepts the standard 3.3V.
   analogReference(AR_DEFAULT);
   maxVolt = 3.3;
 #else        // For any board other than the Arduino Due
@@ -2404,7 +2404,7 @@ float currentRead(int iPin, float Volt, int polar, float RAmpI){
   float c3 = 15.01; //This is the value of R20+R21 in Kohms
   float c4 = 12.0; // This is the value of R21 in Kohms
   
-#ifdef ArDUE  // The arduino DUE only accepts the standard 3.3V.
+#ifdef ArARM32  // The arduino DUE only accepts the standard 3.3V.
   analogReference(AR_DEFAULT);
 #else  
   analogReference(DEFAULT);  //For any board other than the Arduino Due
@@ -2413,7 +2413,7 @@ float currentRead(int iPin, float Volt, int polar, float RAmpI){
   //float currentReadingmA = (-1*polar)*(((float)analogRead(iPin) * 5.0 / 1024.0) - refV * 334.33 * (3.01 / 15.01)) / (334.33 * (12.0 / 15.01));
   float currentReadingmA = (-1*polar)*(((float)analogRead(iPin) * Volt / 1024.0) - refV * RAmpI * (c2 / c3)) / (RAmpI * (c4 / c3));
 
-#ifdef ArDUE  // The arduino DUE only accepts the standard 3.3V.
+#ifdef ArARM32  // The arduino DUE only accepts the standard 3.3V.
   analogReference(AR_DEFAULT);
 #else  
   analogReference(DEFAULT);  //For any board other than the Arduino Due
