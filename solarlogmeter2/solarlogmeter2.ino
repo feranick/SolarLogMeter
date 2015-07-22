@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 3.2 - PV IV logging 
+ v. 3.3 - PV IV logging 
  2011-2015 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -59,8 +59,8 @@
  need to be properly set according to the right thermistor.   
  
  5. SD Card:
- If using the the Adafruit Logging shield with an Arduino Mega, in the file:
- ~arduino/libraries/SD/utility/Sd2Card.h
+ If using the the Adafruit Logging shield with an Arduino Mega (Only the MEGA),
+ in the file: ~arduino/libraries/SD/utility/Sd2Card.h
  
  a. change the line: 
     #define MEGA_SOFT_SPI 0
@@ -124,9 +124,12 @@
 #define SPI_divider SPI_CLOCK_DIV16
 
 //--------------------------------------------------------------------------------
-// Uncomment for use with Arduino DUE
+// Uncomment the line corresponding to the Arduino board (ARM32 and INTEL ONLY)
+// DEFAULT (all commented) is for Arduino AVR boards.
 //--------------------------------------------------------------------------------
-//#define ArDUE
+//#define ArARM32 // Arduino DUE, ZERO
+
+//#define ArINTEL // Arduino Galileo, Edison
 
 //--------------------------------------------------------------------------------
 // Change this to match your SD shield or module;
@@ -198,7 +201,7 @@ int bootMode = 1;    // set if automatic acquisition (0) or manual through seria
 
 float latitude = 42.359757;        // MIT - Cambridge, MA - USA
 float longitude = -71.093559;      // MIT - Cambridge, MA - USA
-float timezone = -5;               // from GMT
+float SLMtimezone = -5;               // from GMT
 int DST= 1;                        // Daylight Saving Time: 0-NO, 1-YES.
 
   //If you live in the southern hemisphere, it would probably be easier
@@ -946,8 +949,13 @@ void ivSingle() {
       ip+=2;
     
       // Get Isc and extract Pmax   
-      Isc[i]=max(Isc[i],Ic[i]); 
 
+      #ifdef ArINTEL  // The arduino INTEL uses standard max call instead.
+        Isc[i]=std::max(Isc[i],Ic[i]); 
+      #else  
+        Isc[i]=max(Isc[i],Ic[i]); 
+      #endif
+      
       if(Pmax[i]<=V[i]*Ic[i])
         {
         Pmax[i]=V[i]*Ic[i];
@@ -1050,7 +1058,7 @@ Serial.println();
    Serial.print("\"Longitude\",");
    Serial.println(longitude);
    Serial.print("\"Time zone\",");
-   Serial.println(timezone);
+   Serial.println(SLMtimezone);
    Serial.println();
   
   if(sds==true)
@@ -1081,7 +1089,7 @@ Serial.println();
     dataFile.print("\"Longitude\",");
     dataFile.println(longitude);
     dataFile.print("\"Time zone\",");
-    dataFile.println(timezone);
+    dataFile.println(SLMtimezone);
     dataFile.println();
     dataFile.close();
     Serial.println("Written on SD card");
@@ -1520,7 +1528,7 @@ void Pref(){
     delayTime = value(myFile);   // generic delay time (msecs)
     latitude = valuef(myFile);   // location latitude
     longitude = valuef(myFile);  // location longitude
-    timezone = valuef(myFile);   // location timezone
+    SLMtimezone = valuef(myFile);   // location timezone
     DST = value(myFile);         // Daylight Saving Time
     
     for(int i=0; i<numCell; i++)
@@ -1549,7 +1557,7 @@ void Pref(){
     myFile.println(delayTime);  // generic delay time (msecs)
     myFile.println(latitude);   // location latitude
     myFile.println(longitude);  // location longitude
-    myFile.println(timezone);   // location timezone
+    myFile.println(SLMtimezone);   // location timezone
     myFile.println(DST);        // Daylight Saving Time
     
     for(int i=0; i<numCell; i++)
@@ -1702,7 +1710,7 @@ void NowSerial(){
   Serial.print(longitude);
   Serial.println(" deg");
   Serial.print("Time zone: ");
-  Serial.print(timezone);
+  Serial.print(SLMtimezone);
   Serial.println(" GMT");
   
   sunPos sPos = calcSunPos(now);
@@ -2096,7 +2104,7 @@ void sensitivity(uint8_t level, int i)
   float n = daynum(month2) + day;//NUMBER OF DAYS SINCE THE START OF THE YEAR. 
   delta = .409279 * sin(2 * pi * ((284 + n)/365.25));//SUN'S DECLINATION.
   day = dayToArrayNum(day);//TAKES THE CURRENT DAY OF THE MONTH AND CHANGES IT TO A LOOK UP VALUE ON THE HOUR ANGLE TABLE.
-  h = (FindH(day,month2)) + longitude + (timezone * -1 * 15);//FINDS THE NOON HOUR ANGLE ON THE TABLE AND MODIFIES IT FOR THE USER'S OWN LOCATION AND TIME ZONE.
+  h = (FindH(day,month2)) + longitude + (SLMtimezone * -1 * 15);//FINDS THE NOON HOUR ANGLE ON THE TABLE AND MODIFIES IT FOR THE USER'S OWN LOCATION AND TIME ZONE.
   h = ((((hour2 + minute2/60) - 12) * 15) + h)*pi/180;//FURTHER MODIFIES THE NOON HOUR ANGLE OF THE CURRENT DAY AND TURNS IT INTO THE HOUR ANGLE FOR THE CURRENT HOUR AND MINUTE.
   sPos.altitude = (asin(sin(latitude1) * sin(delta) + cos(latitude1) * cos(delta) * cos(h)))*180/pi;//FINDS THE SUN'S ALTITUDE.
   sPos.azimuth = ((atan2((sin(h)),((cos(h) * sin(latitude1)) - tan(delta) * cos(latitude1)))) + (northOrSouth*pi/180)) *180/pi;//FINDS THE SUN'S AZIMUTH.
