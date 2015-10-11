@@ -1,6 +1,11 @@
-SolarLogMeter v. 3.5 - 201510
+SolarLogMeter v. 3.5 - 20151010
 
 ----
 By Nicola Ferralis (feranick): feranick@hotmail.com
 
 Arduino sketch for a Log Meter device for solar PV measurements.
+
+Required Library: Real Time Clock:
+https://github.com/adafruit/RTClib
+
+Requires Arduino MEGA 2560 or better (AVR) or Arduino DUE.
