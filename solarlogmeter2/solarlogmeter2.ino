@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 3.4 - PV IV logging 
+ v. 3.5 - PV IV logging 
  2011-2015 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -101,15 +101,6 @@
  - Location Longitude (default: -71.09)
  - Location Timezone from GMT (default: -5.00)  
  - Daylight Saving Time (default: 1, yes).
-
- 10. When compiling targeting the Arduino Intel-based Galileo or Edison, in file:
- ~arduino/libraries/RTClib/RTClib.cpp change from line 4:
-
-  #define WIRE Wire1
-
- into: 
-
-  #define WIRE Wire
  
  //**************************************************************************************
  */
@@ -194,7 +185,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "3.4 - 20150722";
+String versProg = "3.5 - 20151010";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -470,6 +461,7 @@ void setup()
 #ifdef ArARM32  // The arduino DUE only accepts the standard 3.3V.
   analogReference(AR_DEFAULT);
   maxVolt = 3.3;
+  analogReadResolution(12);
 #else        // For any board other than the Arduino Due
   analogReference(DEFAULT);  //0 to 5 V 
   maxVolt = 5.0;
