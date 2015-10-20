@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 3.5 - PV IV logging 
+ v. 3.6 - PV IV logging 
  2011-2015 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -115,7 +115,7 @@
 // Uncomment the line corresponding to the Arduino board (ARM32 and INTEL ONLY)
 // DEFAULT (all commented) is for Arduino AVR boards.
 //--------------------------------------------------------------------------------
-//#define ArARM32 // Arduino DUE, ZERO
+#define ArARM32 // Arduino DUE, ZERO
 
 //#define ArINTEL // Arduino Galileo, Edison
 
@@ -138,7 +138,7 @@
 // Adafruit SD shields and modules: pin 10 (also change MEGA_SOFT_SPI from 0 to 1
 // Sparkfun SD shield: pin 8
 //---------------------------------------------------------------------------------
-#define SDshield 10 
+#define SDshield 10
 
 //-------------------------------------------------
 // Type of temperature measurement system used.
@@ -185,7 +185,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "3.5 - 20151010";
+String versProg = "3.6 - 20151019";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -216,6 +216,7 @@ float northOrSouth = 180;
 
 void(* resetFunc) (void) = 0; //declare reset function @ address 0
 int numCell = 1;        // Max number of cells to be measured
+int TBits = 1023;       // Resolution analog input
 
 float currentOffset = 0.0;  // Offset in current measurement
 
@@ -462,6 +463,7 @@ void setup()
   analogReference(AR_DEFAULT);
   maxVolt = 3.3;
   analogReadResolution(12);
+  TBits = 4095;
 #else        // For any board other than the Arduino Due
   analogReference(DEFAULT);  //0 to 5 V 
   maxVolt = 5.0;
@@ -920,7 +922,7 @@ void ivSingle() {
       // the 2 factor is now set initially in the definition parameters as Vgain
               
       // Voltage Measurement
-      //V[i] = (float)analogRead(ip) / 1024.0 * 5.0 * 2;
+      //V[i] = (float)analogRead(ip) / (TBits+1) * 5.0 * 2;
       V[i] = avoltage(ip, maxVolt, Vgain, avNum);
       delay(2);
       
@@ -2227,7 +2229,7 @@ inline float voltage(int analogPin, float volt, float gain)
 {
   
   int v = analogRead(analogPin); 
-  float vf = gain*volt*((float)v/(float)1024.0);  //rescale channel with max voltage
+  float vf = gain*volt*((float)v/(float)(TBits+1));  //rescale channel with max voltage
   return vf;
 }
 
@@ -2412,8 +2414,8 @@ float currentRead(int iPin, float Volt, int polar, float RAmpI){
   analogReference(DEFAULT);  //For any board other than the Arduino Due
 #endif
 
-  //float currentReadingmA = (-1*polar)*(((float)analogRead(iPin) * 5.0 / 1024.0) - refV * 334.33 * (3.01 / 15.01)) / (334.33 * (12.0 / 15.01));
-  float currentReadingmA = (-1*polar)*(((float)analogRead(iPin) * Volt / 1024.0) - refV * RAmpI * (c2 / c3)) / (RAmpI * (c4 / c3));
+  //float currentReadingmA = (-1*polar)*(((float)analogRead(iPin) * 5.0 / (TBits+1) - refV * 334.33 * (3.01 / 15.01)) / (334.33 * (12.0 / 15.01));
+  float currentReadingmA = (-1*polar)*(((float)analogRead(iPin) * Volt / (TBits+1)) - refV * RAmpI * (c2 / c3)) / (RAmpI * (c4 / c3));
 
 #ifdef ArARM32  // The arduino DUE only accepts the standard 3.3V.
   analogReference(AR_DEFAULT);

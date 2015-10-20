@@ -1,3 +1,5 @@
+Version 3.6 - 20151019 - Fixed resolution issues in analog input with Arduino DUE.
+
 Version 3.5 - 20151010 - Now compiles correctly on the Arduino Intel-based boards. Just enable the correct flag. Analog input resolution on ARM-based Arduinos is now set to 12bit (compared to 10bit of AVR-based boards).
 
 Version 3.4 - 20150722 - Added info on how to compile with correct RTClib support for Arduino Intel-based boards.
