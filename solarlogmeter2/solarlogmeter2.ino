@@ -3,8 +3,8 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 3.6 - PV IV logging 
- 2011-2015 - Nicola Ferralis - ferralis@mit.edu		
+ v. 3.7 - PV IV logging 
+ 2011-2016 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
  created by Rupak Chakraborty and David Berney Needleman, MIT PV Lab.
@@ -60,7 +60,7 @@
  
  5. SD Card:
  If using the the Adafruit Logging shield with an Arduino Mega (Only the MEGA),
- in the file: ~arduino/libraries/SD/utility/Sd2Card.h
+ in the file: ~arduino/libraries/SD/src/utility/Sd2Card.h
  
  a. change the line: 
     #define MEGA_SOFT_SPI 0
@@ -115,7 +115,7 @@
 // Uncomment the line corresponding to the Arduino board (ARM32 and INTEL ONLY)
 // DEFAULT (all commented) is for Arduino AVR boards.
 //--------------------------------------------------------------------------------
-#define ArARM32 // Arduino DUE, ZERO
+//#define ArARM32 // Arduino DUE, ZERO
 
 //#define ArINTEL // Arduino Galileo, Edison
 
@@ -185,7 +185,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "3.6 - 20151019";
+String versProg = "3.7 - 20160509";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 

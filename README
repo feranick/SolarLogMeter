@@ -1,4 +1,4 @@
-SolarLogMeter v. 3.6 - 20151019
+SolarLogMeter v. 3.7 - 20160509
 
 ----
 By Nicola Ferralis (feranick): feranick@hotmail.com
@@ -9,3 +9,16 @@ Required Library: Real Time Clock:
 https://github.com/adafruit/RTClib
 
 Requires Arduino MEGA 2560 or better (AVR) or Arduino DUE.
+Initial support for Arduino Intel-based boards is included, but largely untested.
+
+Features (if proper hardware is available):
+- Simultaneous acquisition of up to 4 solar cell systems  
+- Real time clock
+- Extraction of relevant parameters based on IV curve
+- Support for serial display or automatic acquisition.
+- Support for saving data on SD card.
+- Customizable configuration file.
+- Support for temperature (via IC or thermistor) and barometric pressure
+- Support for irradiance monitor
+- Automatically computes and saves sun position
+
