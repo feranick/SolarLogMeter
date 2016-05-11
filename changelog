@@ -1,3 +1,5 @@
+Version 3.8 - 20160510 - Updated documentation. Default acquisition time is now 5 minutes.
+
 Version 3.7 - 20160509 - Minor changes to copyright and initial guide
 
 Version 3.6 - 20151019 - Fixed resolution issues in analog input with Arduino DUE.

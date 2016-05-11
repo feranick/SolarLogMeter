@@ -1,7 +1,7 @@
 SolarLogMeter
 ==============
 
-Current Version: 3.7 - 20160509
+Current Version: 3.8 - 20160510
 
 Arduino sketch for a Log Meter device for solar PV measurements.
 
@@ -43,7 +43,7 @@ System and operational configuration is read from the file SLG.CFG in the SD car
 - number of cells (max: 4)
 - Offset in current measurement (default: 0 mA)
 - Max Voltage measured (default: 4.1 V)
-- time in between IV scans (default: 12)
+- time in between IV scans (default: 5)
 - unit time in between IV scans (0: min; 1: sec)
 - Number of averages in voltage measurements (default: 80. Not used in v2)
 - generic delay time (msecs) (default: 1000s ms)

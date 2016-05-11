@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 3.7 - PV IV logging 
+ v. 3.8 - PV IV logging 
  2011-2016 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -95,7 +95,7 @@
  - Number of cells (default: 1, max: 4)
  - Offset in current measurement (default: 0 mA)
  - Max Voltage (default: stopV = 4.1 V)
- - Time between IV scans (default: 12)
+ - Time between IV scans (default: 5)
  - Unit of Time between IV scans (default: 0: minutes, 1: sec)
  - Number of averages in voltage measurements (default: 80. Not used in v2)
  - Generic waiting time in millisec (default: 1000s ms)
@@ -103,6 +103,7 @@
  - Location Longitude (default: -71.09)
  - Location Timezone from GMT (default: -5.00)  
  - Daylight Saving Time (default: 1, yes).
+ - Parameter to apply (0) or not (1) the voltage divider correction.
  
  //**************************************************************************************
  */
@@ -187,7 +188,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "3.7 - 20160510";
+String versProg = "3.8 - 20160510";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -268,7 +269,7 @@ int TR3 = 7;    // digital pin for analog out for Amplification resistor R3.
 /////////////////////////////////
 
 float precIoc = 4.0;  // minimum current (mA) to determine Voc
-unsigned long restTime = 12;  //Time in between IV scans (minutes)
+unsigned long restTime = 5;  //Time in between IV scans (minutes)
 unsigned long restTimeSec = 0;  //
 unsigned int delayTime = 10; // Generic time delay (ms). Fallback in case no SD card is found.
 
