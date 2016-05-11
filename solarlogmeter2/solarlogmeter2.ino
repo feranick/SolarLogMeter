@@ -91,10 +91,12 @@
  - Time is always given in Standard Daylight Time form (no daylight saving).
  
  9. Config file (on SD card): SLM.CFG
- - Number of cells (default: 1)
- - Max Voltage (default: stopV = 4.1V)
- - Time between IV scans in minutes (default: 12 minutes)
- - Unit of Time between IV scans (default: 0: minutes)
+ - Set if automatic acquisition (0) or manual through serial commands (1)
+ - Number of cells (default: 1, max: 4)
+ - Offset in current measurement (default: 0 mA)
+ - Max Voltage (default: stopV = 4.1 V)
+ - Time between IV scans (default: 12)
+ - Unit of Time between IV scans (default: 0: minutes, 1: sec)
  - Number of averages in voltage measurements (default: 80. Not used in v2)
  - Generic waiting time in millisec (default: 1000s ms)
  - Location Latitude (default: 42.36)
@@ -185,7 +187,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "3.7 - 20160509";
+String versProg = "3.7 - 20160510";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 

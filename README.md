@@ -41,9 +41,9 @@ System and operational configuration is read from the file SLG.CFG in the SD car
 
 - set if automatic acquisition (0) or manual through serial commands (1)
 - number of cells (max: 4)
-- Offset in current measurement
-- Max Voltage measured (stopV)
-- time in between IV scans (msecs)
+- Offset in current measurement (default: 0 mA)
+- Max Voltage measured (default: 4.1 V)
+- time in between IV scans (default: 12)
 - unit time in between IV scans (0: min; 1: sec)
 - Number of averages in voltage measurements (default: 80. Not used in v2)
 - generic delay time (msecs) (default: 1000s ms)
@@ -56,22 +56,22 @@ Hardware configuration
 =======================
  
  1. Controls a Microchip MCP4822 12-bit dual-voltage output DAC.
-  The MCP4822 is SPI-compatible. To command it, hold the CS pin low and send 16 bits,
-  4 configuration bits
-   DAC selection: 0 = DACa, 1 = DACb
-   empty
-   gain selection: 1 = 1x, 0 = 2x with Vref = 2.048
-   output shutdown: 1 = Vout is available, 0 = Vout is not available R = 500 k-ohms
-    12 data bits (0 - 4096)
+  - The MCP4822 is SPI-compatible. To command it, hold the CS pin low and send 16 bits,
+  - 4 configuration bits
+   - DAC selection: 0 = DACa, 1 = DACb
+   - empty
+   - gain selection: 1 = 1x, 0 = 2x with Vref = 2.048
+   - output shutdown: 1 = Vout is available, 0 = Vout is not available R = 500 k-ohms
+   - 12 data bits (0 - 4096)
 
  2. The circuit:
-  * DACa ouput through buffer amp - to A0 and DUT+
-  * DACb output - to op amp negative terminal thru 3.3k resistor
-  * CS - to digital pin 10  (SS pin)
-  * SDI - to digital pin 11 (MOSI pin)
-  * SCK - to digital pin 13 (SCK pin)
-  * Vout of current meter - to op amp positive terminal through 3.3k resistor
-  * Vout of op amp (current measurement) - to A1
+  - DACa ouput through buffer amp - to A0 and DUT+
+  - DACb output - to op amp negative terminal thru 3.3k resistor
+  - CS - to digital pin 10  (SS pin)
+  - SDI - to digital pin 11 (MOSI pin)
+  - SCK - to digital pin 13 (SCK pin)
+  - Vout of current meter - to op amp positive terminal through 3.3k resistor
+  - Vout of op amp (current measurement) - to A1
  
  3. Resistors for voltage dividers are labeled Rv1 and Rv2, while shunts for current 
  measurements are labeled Ri. They are arrays of floats, with number defined by the
@@ -101,16 +101,20 @@ Hardware configuration
  
  6. Temperature measurements:
  
- There are two ways temperature can be measured, using
+ There are two ways temperature can be measured, using:
+
  - thermistor (Vishay NTCLE100E3), pin 7 - (comment the definition of TBAR)
  - Bosch BMP085 Barometric sensor - via I2C bus (uncomment the definition of TBAR)
- You must select at build time the type of sensor you want to use.
+ 
+You must select at build time the type of sensor you want to use.
  
  7. Irradiance measurements:
+
  - Pins 2, 4, 5, 6, 7 for vertical irradiance.
  - Pins 3, 22, 23, 24, 25 for horizontal irradiance.
  
  8. Sun calculator:
+
  - Time is always given in Standard Daylight Time form (no daylight saving).
 
 
