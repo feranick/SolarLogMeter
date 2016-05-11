@@ -1,5 +1,8 @@
 SolarLogMeter v. 3.7 - 20160509
+===============================
+
 Arduino sketch for a Log Meter device for solar PV measurements.
+
 By Nicola Ferralis (feranick): feranick@hotmail.com
 
 Features
