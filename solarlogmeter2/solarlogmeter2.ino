@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 3.8 - PV IV logging 
+ v. 4.0 - PV IV logging 
  2011-2016 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -188,7 +188,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "3.8 - 20160510";
+String versProg = "4.0 - 20160513";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -205,7 +205,7 @@ int bootMode = 1;    // set if automatic acquisition (0) or manual through seria
 
 float latitude = 42.359757;        // MIT - Cambridge, MA - USA
 float longitude = -71.093559;      // MIT - Cambridge, MA - USA
-float SLMtimezone = -5;               // from GMT
+float SLMtimezone = -5;            // from GMT
 int DST= 1;                        // Daylight Saving Time: 0-NO, 1-YES.
 
   //If you live in the southern hemisphere, it would probably be easier
@@ -643,7 +643,7 @@ void loop()
       if(inSerial==49)
       { 
         Serial.println("Collecting Single IV");
-        ivSingle();
+        ivSingle(false);
         serialMenu();
        }
 
@@ -655,7 +655,7 @@ void loop()
         while(inSerial2!=51)
         {
           inSerial2=Serial.read(); 
-          ivSingle();
+          ivSingle(false);
 
           Serial.print("Next IV sequence in: ");
           Serial.print(restTime);
@@ -676,6 +676,32 @@ void loop()
       {
         NowSerial();
       }
+
+      // Perform offset in current correction measurement info (7)
+      if(inSerial==55)  
+      { inSerial2 = 0;
+        Serial.println("---------------------------------------------------------");
+        Serial.println("Collecting Single IV for calibration of offset current");
+        Serial.println("WARNING: disconnect solar cell from circuit");
+        Serial.println("Press 1 to continue the calibration");
+        Serial.println("---------------------------------------------------------");
+
+        //inSerial2=Serial.read(); 
+        //if(inSerial2==51) {
+          ivSingle(true);
+          Serial.println("-------------------------------------------------------");
+          Serial.print("Current offset (mA): ");
+          Serial.println(currentOffset);
+          UpdatePref();
+          Serial.print("Current offset saved in configuration file: \"");
+          Serial.print(cfgFile);
+          Serial.println("\"");
+          Serial.println("You may now reconnect the solar cell.");
+          Serial.println("---------------------------------------------------------");
+          NowSerial();
+          serialMenu();
+        //}
+      }      
 
       // Reset device (0)
       if(inSerial==48)  
@@ -705,7 +731,7 @@ void loop()
       sds=true;
       //headerSD();
       Serial.println("Starting data logging into SD card...");
-      ivSingle();
+      ivSingle(false);
       blinkLED(RLED, 3, 500);
     }
 
@@ -717,7 +743,7 @@ void loop()
         //headerSD();
         Serial.println("Starting data logging into SD card...");
         blinkLED(RLED, 2, 500);
-        ivSingle();
+        ivSingle(false);
 
         blinkLED(RLED, 3, 500);
         delay(100);  
@@ -750,7 +776,7 @@ void loop()
       sds = true;
       
       while(bootMode == 0) {
-          ivSingle();
+          ivSingle(false);
 
           Serial.print("Next IV sequence in: ");
           Serial.print(restTime);
@@ -763,10 +789,7 @@ void loop()
             delay(restTime*1000);
           }
         }    
-      
   }
-
-
 }
 
 
@@ -778,7 +801,7 @@ void loop()
 // IV acquisition
 /////////////////////////////
 
-void ivSingle() {
+void ivSingle(bool IOffsetCalib) {
   header();
 
   File dataFile = SD.open(nameFile, FILE_WRITE);
@@ -889,6 +912,11 @@ void ivSingle() {
   // define current and voltage variables:
   float current = 0.0;
   float deviceVoltage = 0.0;
+  int totNumberSteps = ((int) stopVLevelFloat/16);
+
+  if(IOffsetCalib == true)
+    {currentOffset = 0.0;}
+  
   //int sweep = 0; //voltage sweep function
   
   //Serial.println("DATA");  // signal to applet that data is coming
@@ -932,6 +960,11 @@ void ivSingle() {
       // Current Measurement
       I[i] = currentRead(ip+1, maxVolt, polar, RAmpI)*1000/Ri[i]; //in mA
       Ic[i] = I[i] + currentOffset;
+
+      if(IOffsetCalib == true)
+        {currentOffset += abs(I[i]/totNumberSteps);}
+      else
+        {Ic[i] = I[i] + currentOffset;}
       
       delay(2);
       
@@ -1105,23 +1138,20 @@ Serial.println();
   
   delay(delayTime);
   
-
   ////////////////
   // Analyse data
   ////////////////
 
-
-  analysisHeaderSerial();
-
-  for (int i=0; i<numCell; i++) {
-
-    analysisSerial(i, Voc[i], Isc[i], Vmax[i], Imax[i], Pmax[i], Vmax[i]*Imax[i]/(Voc[i]*Isc[i]*1000), jmax, T, P, irra0, irra1, now);
-
-    if(sds==true)
-    { File dataFile1 = SD.open(nameFileA[i], FILE_WRITE);
-      analysisSD(dataFile1, i, Voc[i], Isc[i], Vmax[i], Imax[i], Pmax[i], Vmax[i]*Imax[i]/(Voc[i]*Isc[i]*1000), jmax, T, P, irra0, irra1, now);
-     dataFile1.close();
-    } 
+  if(IOffsetCalib == false) {
+    analysisHeaderSerial();
+    for (int i=0; i<numCell; i++) {
+      analysisSerial(i, Voc[i], Isc[i], Vmax[i], Imax[i], Pmax[i], Vmax[i]*Imax[i]/(Voc[i]*Isc[i]*1000), jmax, T, P, irra0, irra1, now);
+      if(sds==true)
+        {File dataFile1 = SD.open(nameFileA[i], FILE_WRITE);
+        analysisSD(dataFile1, i, Voc[i], Isc[i], Vmax[i], Imax[i], Pmax[i], Vmax[i]*Imax[i]/(Voc[i]*Isc[i]*1000), jmax, T, P, irra0, irra1, now);
+        dataFile1.close();
+        } 
+     }
   }
 }
 
@@ -1134,7 +1164,8 @@ void serialMenu(){
   Serial.println("SELECT FROM THE FOLLOWING OPTIONS:");
   Serial.println("1: Collect single IV - 2: Collect sequence IV - 3: Stop sequence IV");
   Serial.println("4: Start writing data on SD - 5: Stop writing data on SD");
-  Serial.println("6: Stamp loaction/time/date/solar info - 0: Reset");
+  Serial.println("6: Stamp loaction/time/date/solar info - 7: Current offset calibration");
+  Serial.println("0: Reset");
   Serial.println("---------------------------------------------------------------------------");
 
   Serial.println();  
@@ -1547,12 +1578,21 @@ void Pref(){
   }
   else 
   {
-    File myFile = SD.open(cfgFile, FILE_WRITE);
-
     Serial.println("Missing configuration file on SD card");
     Serial.print("Creating configuration file: \"");
     Serial.print(cfgFile);
     Serial.println("\"");
+    Serial.println("Current offset calibration needed: please run 7 from main menu");
+    Serial.println("with the solar cell disconnected");
+    UpdatePref();
+  }
+}
+
+
+void UpdatePref(){
+    SD.remove(cfgFile);
+    delay(5);
+    File myFile = SD.open(cfgFile, FILE_WRITE);
 
     myFile.println(bootMode);
     myFile.println(numCell);    // number of cells
@@ -1573,8 +1613,6 @@ void Pref(){
     }  // Parameter to apply (0) or not (1) the voltage divider correction.
 
     myFile.close();
-
-  }
 }
 
 
@@ -1678,7 +1716,12 @@ void NowSerial(){
   Serial.print("-");
   Serial.print(now.year(), DEC);
   Serial.println(")");
-  
+
+  Serial.print("Operational mode: ");
+  if(bootMode == 1)
+    {Serial.println("Manual");}
+  else
+    {Serial.println("Auto");}
   Serial.print("Max Voltage: ");
   Serial.print(stopV);
   Serial.println(" V");

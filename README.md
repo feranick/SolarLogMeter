@@ -1,7 +1,7 @@
 SolarLogMeter
 ==============
 
-Current Version: 3.8 - 20160510
+Current Version: 4.0 - 20160513
 
 Arduino sketch for a Log Meter device for solar PV measurements.
 
@@ -20,9 +20,13 @@ Features
 - Support for irradiance monitor
 - Automatically computes and saves sun position
 - Flexible activation/deactivation of used hardware.
+- Automatic current offset calibration to the specific hardware
 
 Requirements
 ============
+
+IV measurement is done using Microchip MCP4822 12-bit dual-voltage output DAC.
+
 Required Library: Real Time Clock:
 https://github.com/adafruit/RTClib
 
@@ -31,7 +35,16 @@ Initial support for Arduino Intel-based boards is included, but largely untested
 
 A data logging shield is recommended to save data in SD card, along with a custom configuration file. Recommended logging boards:
 
-- Adafruit Logging shield
+- Arduino Ethernet shield: pin 4
+- Adafruit SD shields and modules: pin 10 (also change MEGA_SOFT_SPI from 0 to 1)
+- Sparkfun SD shield: pin 8
+
+For temperature and pressure measurements:
+
+- thermistor (Vishay NTCLE100E3), pin 7
+- Bosch BMP085 Barometric sensor - via I2C bus
+
+You must select at build time the type of sensor you want to use.
 
 
 Configuration file
