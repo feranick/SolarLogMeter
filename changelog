@@ -1,3 +1,5 @@
+Version 4.2 - 20160517 - Removed external dependency to SLMtypes.h, now included directly in src.
+
 Version 4.2 - 20160517 - Automatic acquisition can be stopped and set to manual. Major code cleanup and bug fixes.
 
 Version 4.1 - 20160517 - Added ability to change from manual mode to Auto from serial display. Date/Time are now split into two separate columns.

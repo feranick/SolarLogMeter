@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 4.2 - PV IV logging 
+ v. 4.3 - PV IV logging 
  2011-2016 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -117,7 +117,6 @@
 #include <Wire.h>
 #include <SPI.h>
 #include "RTClib.h"
-#include "SLMtypes.h" 
 
 //--------------------------------------------------------------------------------
 // Uncomment the line corresponding to the Arduino board (ARM32 and INTEL ONLY)
@@ -191,7 +190,7 @@
 // Name and version 
 //------------------
 String nameProg = "SolarLogMeter";
-String versProg = "4.2 - 20160517";
+String versProg = "4.3 - 20160517";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -212,6 +211,10 @@ int DST= 1;                        // Daylight Saving Time: 0-NO, 1-YES.
   //for you if you make north as the direction where the azimuth equals
   //0 degrees. To do so, switch the 0 below with 180.  
 float northOrSouth = 180;
+
+typedef struct
+{ float azimuth;
+  float altitude; } sunPos;
 
 //------------------
 //Program variables
