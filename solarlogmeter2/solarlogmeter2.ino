@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 4.1 - PV IV logging 
+ v. 4.2 - PV IV logging 
  2011-2016 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -124,7 +124,6 @@
 // DEFAULT (all commented) is for Arduino AVR boards.
 //--------------------------------------------------------------------------------
 //#define ArARM32 // Arduino DUE, ZERO
-
 //#define ArINTEL // Arduino Galileo, Edison
 
 //----------------------------------------------------------------------------
@@ -191,23 +190,19 @@
 //------------------
 // Name and version 
 //------------------
-
 String nameProg = "SolarLogMeter";
-String versProg = "4.1exp - 20160516";
+String versProg = "4.2 - 20160517";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
-
 
 //-------------------------------
 // Boot mode
 //-------------------------------
-
 int bootMode = 1;    // set if automatic acquisition (0) or manual through serial commands (1)    
 
 //-------------------------------
 // Time and Location variables 
 //-------------------------------
-
 float latitude = 42.359757;        // MIT - Cambridge, MA - USA
 float longitude = -71.093559;      // MIT - Cambridge, MA - USA
 float SLMtimezone = -5;            // from GMT
@@ -221,7 +216,6 @@ float northOrSouth = 180;
 //------------------
 //Program variables
 //------------------
-
 void(* resetFunc) (void) = 0; //declare reset function @ address 0
 int numCell = 1;        // Max number of cells to be measured
 int TBits = 1023;       // Resolution analog input
@@ -306,17 +300,14 @@ float Rtt = 33.0;  // Value thermistor used for T measurement (make sure you cha
 float Rtf = 976.0;   // Value used for voltage divider in T measurement.
 #endif
 
-
 //---------------------
 // SD specific definitions
 //-------------------------
-
 const int chipSelect = SDshield;
 boolean sd = true;     // enable SD support
 boolean sds = false;    //switch SD on/off
 char nameFile[13];
 char nameFileA[4][13];
-
 
 //-----------------------------
 // SPI specific (digital pot)
@@ -324,34 +315,27 @@ char nameFileA[4][13];
 // Obsolete on v2
 // const int slaveSelectPin = 53;
 
-
 //--------------------
 // buttons definition
 //--------------------
-
 int singleIVbtn = 0;
 int multiIVbtn = 0;
 int stopIVbtn = 0;
 
-
 //-------------------------------
 // Misc. constants 
 //-------------------------------
-
 float pi = 3.14159265;
 
 //---------------
 //Real time chip
 //---------------
-
 RTC_DS1307 rtc; // define the Real Time Clock object
 DateTime now;   // New RTC library
-
 
 //---------------
 //Barometric chip
 //---------------
-
 #ifdef TBAR
 #define BMP085_ADDRESS 0x77  // I2C address of BMP085
 const unsigned char OSS = 0;  // Oversampling Setting
@@ -397,8 +381,7 @@ int calcSensitivity[2];
 unsigned long sensitivityHighThresh = 2000;
 unsigned long sensitivityLowThresh = 100000;
 
-unsigned long pulseCount[] = {
-  0, 0};
+unsigned long pulseCount[] = {0, 0};
 unsigned long currentTime0 = millis(); 
 unsigned long startTime0 = currentTime0;
 unsigned long currentTime1 = millis(); 
@@ -417,7 +400,6 @@ float uWattCm2[2];
 volatile unsigned long curPulseCount[2];
 unsigned int count=0;
 unsigned int scale[2];   // holds the TLS scale value, see below
-
 
 //////////////////////////////////////////////////////////
 // SETUP 
@@ -451,7 +433,6 @@ void setup()
    pinMode(TR1, OUTPUT);  
    pinMode(TR2, OUTPUT);
    pinMode(TR3, OUTPUT);
-   
    TRselect(1,0,0);
    Serial.println("Variable Amplification on current measurement enabled");
 #endif
@@ -533,13 +514,12 @@ void setup()
     //----------------------------------------  
     Pref();
     delay (100);
-
+    
     // to use today's date as the filename:
     nameFile2(0,0).toCharArray(nameFile, 13);
     Serial.println();
     Serial.print("Saving full IV data into: ");
     Serial.println(nameFile);
-
     //nameFile2(1,0).toCharArray(nameFileA[0], 13);
     for(int i=0; i<numCell; i++)
     {
@@ -559,7 +539,6 @@ void setup()
   bmp085Calibration();
 #endif
 
-
 #ifdef IRR
   //----------------------------------------
   // Initialize Irradiation sensors
@@ -571,7 +550,6 @@ void setup()
   // Serial.print("Sensitivity 1: ");
   // Serial.println(calcSensitivity[1], DEC);
   Serial.println("Sensitivity of light sensors initialized.");
-
   pinMode(TSL_FREQ_PIN, INPUT);
   pinMode(TSL_S0, OUTPUT); 
   pinMode(TSL_S1, OUTPUT);
@@ -582,7 +560,6 @@ void setup()
   pinMode(TSL1_S1, OUTPUT);
   pinMode(TSL1_S2, OUTPUT);
   pinMode(TSL1_S3, OUTPUT);
-
   digitalWrite(TSL_S2, HIGH);   // S2 and S3 HIGH = /100 output scaling
   digitalWrite(TSL_S3, HIGH);
   digitalWrite(TSL1_S2, HIGH);   // S2 and S3 HIGH = /100 output scaling
@@ -609,9 +586,7 @@ void setup()
   serialMenu();
 
   if(sd==true)
-  {
-    analysisHeaderSD();
-  }
+    {analysisHeaderSD();}
 }
 
 ///////////////////////////////////////////////////////////
@@ -630,23 +605,19 @@ void loop()
 
       //Start (4) / stop (5) writing to SD 
       if(sd==true){
-        if(inSerial==52)
-
-        {
+        if(inSerial==52)        {
           sds=true;
           //headerSD();
           Serial.println("Starting data logging into SD card...");
         }
-        if(inSerial==53)  
-        {
+        if(inSerial==53)          {
           sds=false;
           Serial.println("Stopping data logging into SD card...");
         }
       }
 
       //start acquiring IV (1): Single  - (2): Sequence start - (3): sequence stop
-      if(inSerial==49)
-      { 
+      if(inSerial==49)      { 
         Serial.println("Collecting Single IV");
         ivSingle(false);
         serialMenu();
@@ -656,9 +627,7 @@ void loop()
       {        
         Serial.println("Collecting Sequence IV");
         inSerial2 = 0;
-
-        while(inSerial2!=51)
-        {
+        while(inSerial2!=51)        {
           inSerial2=Serial.read(); 
           ivSingle(false);
 
@@ -678,13 +647,11 @@ void loop()
 
       // Print date/time/weather info (6)
       if(inSerial==54)  
-      {
-        NowSerial();
-      }
+        {NowSerial();}
 
       // Perform offset in current correction measurement info (7)
-      if(inSerial==55)  
-      {        Serial.println("---------------------------------------------------------");
+      if(inSerial==55)        {
+        Serial.println("---------------------------------------------------------");
         Serial.println("Collecting Single IV for calibration of offset current");
         Serial.println("WARNING: disconnect solar cell from circuit");
         Serial.println("Press 1 to continue the calibration");
@@ -703,11 +670,9 @@ void loop()
         NowSerial();
         serialMenu();
       }      
-
-
+      
       // Changing mode from MANUAL to AUTO.
-      if(inSerial==56)  
-      {
+      if(inSerial==56)        {
         Serial.println("---------------------------------------------------------");
         Serial.println("Changing mode from MANUAL to AUTO");
         Serial.print("Preferences updated in configuration file: \"");
@@ -721,8 +686,7 @@ void loop()
       }      
 
       // Reset device (0)
-      if(inSerial==48)  
-      {
+      if(inSerial==48)        {
         Serial.println("Resetting device");
         Serial.println();
         resetFunc();
@@ -741,10 +705,8 @@ void loop()
     // if it is, the buttonState is HIGH:
     if (singleIVbtn == HIGH) {    
     // turn LED on:    
-
       blinkLED(GLED, 1, 500);
       blinkLED(RLED, 2, 500);
-
       sds=true;
       //headerSD();
       Serial.println("Starting data logging into SD card...");
@@ -755,13 +717,11 @@ void loop()
     if (multiIVbtn == HIGH) { 
       blinkLED(GLED, 2, 200); 
       while(stopIVbtn != HIGH){
-
         sds=true;
         //headerSD();
         Serial.println("Starting data logging into SD card...");
         blinkLED(RLED, 2, 500);
         ivSingle(false);
-
         blinkLED(RLED, 3, 500);
         delay(100);  
         stopIVbtn = digitalRead(stopIVPin);
@@ -776,8 +736,6 @@ void loop()
             delay(restTime*1000);
           }
       }
-
-
       blinkLED(GLED, 3, 200);
       stopIVbtn=0;
       sds=false;
@@ -789,14 +747,25 @@ void loop()
 }
 
  else {delay(100);
+    int inSerial = 0;    // variable for serial input
+      Serial.println("SolarLogMeter running in AUTO mode");
+      Serial.println("Type (8) in Serial Monitor to switch from AUTO to MANUAL mode");
       Serial.println("Starting data logging into SD card...");
       sds = true;
-      
       while(bootMode == 0) {
           ivSingle(false);
-
+          Serial.println("Type (8) in Serial Monitor to switch from AUTO to MANUAL mode\n\n");
           Serial.print("Next IV sequence in: ");
           Serial.print(restTime);
+          if (Serial.available() > 0) {
+            inSerial = Serial.read();
+            if(inSerial == 56)
+              { Serial.println("\n\nSwitching from AUTO to MANUAL mode.");
+                bootMode = 1;
+                UpdatePref();
+                NowSerial();
+                serialMenu(); }
+          }
           if(restTimeSec == 0) {
             Serial.println(" minutes");
             delay(restTime*60*1000);
@@ -804,8 +773,7 @@ void loop()
           else {
             Serial.println(" seconds");
             delay(restTime*1000);
-          }
-
+          }          
         }    
   }
 }
@@ -818,7 +786,6 @@ void loop()
 /////////////////////////////
 // IV acquisition
 /////////////////////////////
-
 void ivSingle(bool IOffsetCalib) {
   header();
 
@@ -826,7 +793,6 @@ void ivSingle(bool IOffsetCalib) {
 
   // if the file is available, write to it:
   if (!dataFile) {
-
     Serial.print("Error accessing the SD card. ");
     Serial.println(nameFile);
     sds=false;
@@ -834,14 +800,11 @@ void ivSingle(bool IOffsetCalib) {
   } 
 
   if(sds==true)
-  {
-    headerSD(dataFile);
-  }
+   {headerSD(dataFile);}
 
   /////////////////////////////////
   // DATA ACQUISITION AND SAVING
   /////////////////////////////////
-  
   float T = 0.0; 
   float P = 0.0;
   float irra0 = 0.0;
@@ -850,8 +813,7 @@ void ivSingle(bool IOffsetCalib) {
 #ifdef TBAR
   //Measure T and P at the beginning of the IV acquisition (Barometric).
   Wire.requestFrom(BMP085_ADDRESS, 1);
-  if(Wire.available())
-  {
+  if(Wire.available())  {
     temperature = bmp085GetTemperature(bmp085ReadUT());
     pressure = bmp085GetPressure(bmp085ReadUP());
     T=temperature*0.10;
@@ -868,20 +830,18 @@ void ivSingle(bool IOffsetCalib) {
   irra0=watt0;
   irra1=watt1;
 #endif
-
   float V[numCell], I[numCell], Ic[numCell];
   float Voc[numCell], Ioc[numCell], Isc[numCell], Pmax[numCell], Vmax[numCell], Imax[numCell];
-  
   int jmax;
   int ip=fp;
+  int m1 = 0;
 
   //////////////////////////////
   //Measure IV
   //////////////////////////////
 
   //Setup for Isc, Pmax
-  for (int i=0; i<numCell; i++)
-  { 
+  for (int i=0; i<numCell; i++)  { 
     V[i] = 0.0;
     I[i] = 0.0;
     Ic[i]  = 0.0;
@@ -893,8 +853,6 @@ void ivSingle(bool IOffsetCalib) {
     Imax[i] = 0.0;
     jmax = 0;
   }
-
-  int m1 = 0;
 
 #ifdef MULTIR
   // Set first transistor for current amplification;
@@ -923,7 +881,6 @@ void ivSingle(bool IOffsetCalib) {
   boolean stepIsExact = (stepLevelFloat == float((int)stepLevelFloat)); // determines whether an extra last point should be taken
   
   //more bit math place holders
- 
   byte highEight;
   byte lowEight;
 
@@ -943,7 +900,6 @@ void ivSingle(bool IOffsetCalib) {
     
     highEight = channelV | (byte) ((3840 & level) >> 8);
     lowEight = (byte) 255 & level;
-    
     dacWrite(highEight, lowEight);
     
     // Add sequence number
@@ -960,9 +916,7 @@ void ivSingle(bool IOffsetCalib) {
       {writeDateSD(dataFile);}
    
     ip=fp;
-    for (int i=0; i<numCell; i++)
-      {
-      
+    for (int i=0; i<numCell; i++)      {
       //convert digial voltage reading into device voltage reading.  
       //Divide by 1024 for 10 bit resolution, multiply by 5 to scale to the 5 volt max Arduino output.  
       //Then multiply by 2 because of the non-inverting amplifier with a gain of 2
@@ -1005,17 +959,15 @@ void ivSingle(bool IOffsetCalib) {
    
       // Move to th next cell.  
       ip+=2;
-    
+   
       // Get Isc and extract Pmax   
-
       #ifdef ArINTEL  // The arduino INTEL uses standard max call instead.
         Isc[i]=std::max(Isc[i],Ic[i]); 
       #else  
         Isc[i]=max(Isc[i],Ic[i]); 
       #endif
       
-      if(Pmax[i]<=V[i]*Ic[i])
-        {
+      if(Pmax[i]<=V[i]*Ic[i])        {
         Pmax[i]=V[i]*Ic[i];
         Vmax[i]=V[i];
         Imax[i]=Ic[i];
@@ -1025,13 +977,10 @@ void ivSingle(bool IOffsetCalib) {
         // write data on Serial and SD
         if(sds==true)
           {writeIVSD(dataFile,V[i],I[i],Ic[i]);}
-
-        writeIVSerial(V[i],I[i],Ic[i]);
-        
+        writeIVSerial(V[i],I[i],Ic[i]);    
       }
      dataFile.println();
      Serial.println();
-     
      delay(delayTime);  
      
   //if (!currentOverload){
@@ -1050,30 +999,25 @@ void ivSingle(bool IOffsetCalib) {
   Serial.print(",");
   writeDateSerial();  
 
-  if(sds==true)
-  {
+  if(sds==true)  {
     dataFile.print("\"Voc\"");
     dataFile.print(",");
     writeDateSD(dataFile);
   }
 
   for (int i=0; i<numCell; i++) {
-
     writeIVSerial(Voc[i],Ioc[i]-currentOffset,Ioc[i]);
     // write data on Serial and SD
     if(sds==true)
       {writeIVSD(dataFile,Voc[i],Ioc[i]-currentOffset,Ioc[i]);}
   }
   
-
 #ifdef TBAR
   //Measure T and P at the end of the IV acquisition (Barometric).
   Wire.requestFrom(BMP085_ADDRESS, 1);
-  if(Wire.available())
-  {
+  if(Wire.available())  {
     temperature = bmp085GetTemperature(bmp085ReadUT());
     pressure = bmp085GetPressure(bmp085ReadUP());
-
     T=(T+temperature*0.10)/2;
     P=(P+pressure/100.00)/2;
   }
@@ -1151,11 +1095,9 @@ Serial.println();
     dataFile.println();
     dataFile.close();
     Serial.println("Written on SD card");
-    
   }
-  
   delay(delayTime);
-  
+ 
   ////////////////
   // Analyse data
   ////////////////
@@ -1184,10 +1126,7 @@ void serialMenu(){
   Serial.println("4: Start writing data on SD - 5: Stop writing data on SD");
   Serial.println("6: Stamp loaction/time/date/solar info - 7: Current offset calibration");
   Serial.println("8: Change mode from Manual to Auto; 0: Reset");
-  Serial.println("---------------------------------------------------------------------------");
-
-  Serial.println();  
-
+  Serial.println("---------------------------------------------------------------------------\n"); 
   delay(50);
 }
 
@@ -1221,7 +1160,6 @@ void writeDateSerial(){
 }
 
 void writeIVSerial(float V, float I, float Ic){
-
   Serial.print(",");    
   Serial.print(V*1000);
   Serial.print(","); 
@@ -1255,11 +1193,9 @@ void writeDateSD(File dataFile){
     dataFile.print('0');
   dataFile.print(now.second(), DEC);
   dataFile.print("\"");   
-
 }
 
 void writeIVSD(File dataFile, float V, float I, float Ic){
-
   dataFile.print(",");       
   dataFile.print(V*1000);
   dataFile.print(","); 
@@ -1290,7 +1226,6 @@ void header(){
     Serial.print(" (mA)\"");
   }    
   //Serial.print("\"T (C)\"");  
-
   Serial.println();
 }
 
@@ -1300,7 +1235,6 @@ void header(){
 ///////////////////////////////////////////
 
 void headerSD(File dataFile){
-
   //dataFile.println(nameProg);
   //dataFile.println(developer);
   dataFile.println(" ");
@@ -1310,8 +1244,7 @@ void headerSD(File dataFile){
   dataFile.print(versProg);
   dataFile.println("\"");
   dataFile.print("\"Current offset:\",");
-  dataFile.print(currentOffset);
-  dataFile.println();
+  dataFile.println(currentOffset);
   dataFile.print("\"#\",\"Date\",");
   if(DST==0)
     {dataFile.print("\"Time (ST)\"");}
@@ -1327,11 +1260,8 @@ void headerSD(File dataFile){
     dataFile.print(i);
     dataFile.print(" (mA)\"");
   } 
-
   //dataFile.print("\"T (C)\"");   
-
   dataFile.println(); 
-
 } 
 
 ///////////////////////////////////////////
@@ -1367,9 +1297,7 @@ void analysisHeaderSerial() {
 ///////////////////////////////////////////
 
 void analysisSerial(int i, float V, float I, float V1, float I1, float P1, float FF, int j, float T, float P, float irra0, float irra1, DateTime now) {
-  
   sunPos sPos = calcSunPos(now);
-  
   Serial.print(i);
   Serial.print(",");
   Serial.print(V);
@@ -1403,9 +1331,7 @@ void analysisSerial(int i, float V, float I, float V1, float I1, float P1, float
   Serial.print(sPos.altitude);
   Serial.println();
   Serial.println();
-
 }
-
 
 ///////////////////////////////////////////
 // Stamp analysis header on SD
@@ -1424,9 +1350,9 @@ void analysisHeaderSD() {
     dataFile.print(currentOffset);
     dataFile.println();
     if(DST==0)
-      dataFile.print("\"Date-Time (ST)\",");
+      dataFile.print("\"Date\",\"Time (ST)\",");
     else  
-      dataFile.print("\"Date-Time (DST)\",");
+      dataFile.print("\"Date\",\"Time (DST)\",");
     dataFile.print("\"Voc (V)\",");
     dataFile.print("\"Isc (mA)\",");
     dataFile.print("\"Vmax (V)\",");
@@ -1449,13 +1375,11 @@ void analysisHeaderSD() {
   }
 }
 
-
 ///////////////////////////////////////////
 // Stamp analysis data on SD
 ///////////////////////////////////////////
 
 void analysisSD(File dataFile, int i, float V, float I, float V1, float I1, float P1, float FF, int j, float T, float P, float irra0, float irra1, DateTime now) {
-
   sunPos sPos = calcSunPos(now);
   writeDateSD(dataFile);
   //dataFile.print(",");
@@ -1491,7 +1415,6 @@ void analysisSD(File dataFile, int i, float V, float I, float V1, float I1, floa
   dataFile.print(",");
   dataFile.print(sPos.altitude);
   dataFile.println();
-
 }
 
 
@@ -1499,8 +1422,7 @@ void analysisSD(File dataFile, int i, float V, float I, float V1, float I1, floa
 // Stamp program info into Serial
 ///////////////////////////////////////////
 
-void firstRunSerial()
-{ 
+void firstRunSerial() { 
   Serial.println();
   Serial.println("--------------------------------------");
   Serial.print(nameProg);
@@ -1516,7 +1438,7 @@ void firstRunSerial()
 // Stamp program info into SD
 ///////////////////////////////////////////
 
-void firstRunSD(){
+void firstRunSD() {
   File dataFile = SD.open(nameFile, FILE_WRITE);
 
   if (dataFile) {
@@ -1529,7 +1451,6 @@ void firstRunSD(){
     Serial.print("error opening ");
     Serial.println(nameFile);
   }
-
 } 
 
 
@@ -1540,7 +1461,6 @@ void firstRunSD(){
 
 String nameFile2(int a, int b) {
   String filename;
-
   now = rtc.now();
   //filename += now.year();
   if(a==0)
@@ -1568,7 +1488,6 @@ String nameFile2(int a, int b) {
 
 
 void Pref(){
-
   //SD.remove("test.txt");
   File myFile = SD.open(cfgFile, FILE_READ);
   if (myFile) {
@@ -1611,7 +1530,6 @@ void UpdatePref(){
     SD.remove(cfgFile);
     delay(5);
     File myFile = SD.open(cfgFile, FILE_WRITE);
-
     myFile.println(bootMode);
     myFile.println(numCell);    // number of cells
     myFile.println(currentOffset);  // Offset in current measurement   
@@ -1624,12 +1542,9 @@ void UpdatePref(){
     myFile.println(longitude);  // location longitude
     myFile.println(SLMtimezone);   // location timezone
     myFile.println(DST);        // Daylight Saving Time
-    
-    for(int i=0; i<numCell; i++)
-    {
+    for(int i=0; i<numCell; i++) {
       myFile.println(voltIN[i]);
-    }  // Parameter to apply (0) or not (1) the voltage divider correction.
-
+      }  // Parameter to apply (0) or not (1) the voltage divider correction.
     myFile.close();
 }
 
@@ -1689,8 +1604,6 @@ void blinkLED(int pin, int times, int delays) {
   }
 }
 
-
-
 ///////////////////////////////////////////
 // Displays current time/date
 ///////////////////////////////////////////
@@ -1709,7 +1622,6 @@ void NowSerial(){
 #ifdef IRR
   getIrradiance(1, 0);
 #endif
-
   DateTime now = rtc.now();
   
   Serial.println();
@@ -1734,19 +1646,23 @@ void NowSerial(){
   Serial.print("-");
   Serial.print(now.year(), DEC);
   Serial.println(")");
-
   Serial.print("Operational mode: ");
   if(bootMode == 1)
     {Serial.println("Manual");}
   else
     {Serial.println("Auto");}
+  Serial.print("Auto acquisition every: ");
+  Serial.print(restTime);
+  if(restTimeSec==0)
+    {Serial.println(" min");}
+  else
+    {Serial.println(" sec");}
   Serial.print("Max Voltage: ");
   Serial.print(stopV);
   Serial.println(" V");
   Serial.print("Current offset: ");
   Serial.print(currentOffset);
   Serial.println(" mA");
-  
   Serial.print("T = ");
 #ifdef TBAR
   Serial.print(temperature*0.10);
@@ -1780,7 +1696,6 @@ void NowSerial(){
   Serial.print("Time zone: ");
   Serial.print(SLMtimezone);
   Serial.println(" GMT");
-  
   sunPos sPos = calcSunPos(now);
   Serial.print("Sun azimuth: ");
   Serial.print(sPos.azimuth);
@@ -1798,7 +1713,6 @@ void NowSerial(){
 // Using Bosch BMP085  
 /////////////////////////////////////////////////////
 #ifdef TBAR
-
 // Stores all of the bmp085's calibration values into global variables
 // Calibration values are required to calculate temp and pressure
 // This function should be called at the beginning of the program
@@ -1880,14 +1794,11 @@ long bmp085GetPressure(unsigned long up)
 char bmp085Read(unsigned char address)
 {
   unsigned char data;
-
   Wire.beginTransmission(BMP085_ADDRESS);
   Wire.write(address);
   Wire.endTransmission();
-
   Wire.requestFrom(BMP085_ADDRESS, 1);
   while(!Wire.available());
-
   return Wire.read();
 }
 
@@ -1897,16 +1808,13 @@ char bmp085Read(unsigned char address)
 int bmp085ReadInt(unsigned char address)
 {
   unsigned char msb, lsb;
-
   Wire.beginTransmission(BMP085_ADDRESS);
   Wire.write(address);
   Wire.endTransmission();
-
   Wire.requestFrom(BMP085_ADDRESS, 2);
   while(Wire.available()<2);
   msb = Wire.read();
   lsb = Wire.read();
-
   return (int) msb<<8 | lsb;
 }
 
@@ -1914,17 +1822,14 @@ int bmp085ReadInt(unsigned char address)
 unsigned int bmp085ReadUT()
 {
   unsigned int ut;
-
   // Write 0x2E into Register 0xF4
   // This requests a temperature reading
   Wire.beginTransmission(BMP085_ADDRESS);
   Wire.write(0xF4);
   Wire.write(0x2E);
   Wire.endTransmission();
-
   // Wait at least 4.5ms
   delay(5);
-
   // Read two bytes from registers 0xF6 and 0xF7
   ut = bmp085ReadInt(0xF6);
   return ut;
@@ -1935,31 +1840,25 @@ unsigned long bmp085ReadUP()
 {
   unsigned char msb, lsb, xlsb;
   unsigned long up = 0;
-
   // Write 0x34+(OSS<<6) into register 0xF4
   // Request a pressure reading w/ oversampling setting
   Wire.beginTransmission(BMP085_ADDRESS);
   Wire.write(0xF4);
   Wire.write(0x34 + (OSS<<6));
   Wire.endTransmission();
-
   // Wait for conversion, delay time dependent on OSS
   delay(2 + (3<<OSS));
-
   // Read register 0xF6 (MSB), 0xF7 (LSB), and 0xF8 (XLSB)
   Wire.beginTransmission(BMP085_ADDRESS);
   Wire.write(0xF6);
   Wire.endTransmission();
   Wire.requestFrom(BMP085_ADDRESS, 3);
-
   // Wait for data to become available
   while(Wire.available() < 3);
   msb = Wire.read();
   lsb = Wire.read();
   xlsb = Wire.read();
-
   up = (((unsigned long) msb << 16) | ((unsigned long) lsb << 8) | (unsigned long) xlsb) >> (8-OSS);
-
   return up;
 }
 
@@ -1977,20 +1876,14 @@ void getIrradiance(int aver, int g)     // Get irradiance in uW/cm^2
   // call handler on each rising pulse
   attachInterrupt(4, add_pulse, RISING);
   attachInterrupt(5, add_pulse1, RISING);
-
   watt0 = 0;
   watt1 = 0;
   freq0 = 0;
   freq1 = 0;
-
   if(g==0)
-  {
-    Serial.print("Measuring irradiance.");
-  }
+    {Serial.print("Measuring irradiance.");}
   if(g==1)
-  {
-    Serial.print("Calibrating light sensor.");
-  }
+    {Serial.print("Calibrating light sensor.");}
 
   for(int j=0; j<aver; j++)
   {
@@ -2003,14 +1896,10 @@ void getIrradiance(int aver, int g)     // Get irradiance in uW/cm^2
     setSensitivity(1);
     delay(500);
     if(g==0 || g==1)
-    {
-      Serial.print(".");
-    }
+      {Serial.print(".");}
   }
   if(g==0 || g==1)
-  {
-    Serial.println(" Done");
-  }
+    {Serial.println(" Done");}
 }
 
 
@@ -2020,8 +1909,7 @@ void add_pulse() {
   // DON'T calculate the frequency every READ_TM ms
   // just store the pulse count to be used outside of the interrupt
   currentTime0 = millis();
-  if( currentTime0 - startTime0 >= READ_TM )
-  {
+  if( currentTime0 - startTime0 >= READ_TM )  {
     curPulseCount[0] = pulseCount[0];  // use curPulseCount for calculating freq/uW
     pulseCount[0] = 0;  
     startTime0 = millis();
@@ -2034,8 +1922,7 @@ void add_pulse1() {
   // DON'T calculate the frequency every READ_TM ms
   // just store the pulse count to be used outside of the interrupt
   currentTime1 = millis();
-  if( currentTime1 - startTime1 >= READ_TM )
-  {
+  if( currentTime1 - startTime1 >= READ_TM )  {
     curPulseCount[1] = pulseCount[1];  // use curPulseCount for calculating freq/uW
     pulseCount[1] = 0;  
     startTime1 = millis();
@@ -2058,8 +1945,6 @@ long getUwattCm2(int i) {
 
   // extrapolate into entire cm2 area
   uWattCm2[i]  = uw_cm2  * ( (float) 1 / (float) 0.0136 );
-
-
   return(uWattCm2[i]);
 }
 
@@ -2068,13 +1953,11 @@ void setSensitivity(int i)
 { 
 
   getUwattCm2(i);
-  if (uWattCm2[i] <  sensitivityHighThresh)
-  {
+  if (uWattCm2[i] <  sensitivityHighThresh)  {
     sensitivity(3, i);
     return;
   } 
-  if (uWattCm2[i] > sensitivityLowThresh )
-  {
+  if (uWattCm2[i] > sensitivityLowThresh )  {
     sensitivity(1, i);
     return;
   }
@@ -2087,54 +1970,45 @@ void sensitivity(uint8_t level, int i)
   switch (level)
   {
   case 1:
-    if (calcSensitivity[i] != 10)
-    {
+    if (calcSensitivity[i] != 10)    {
       //Serial.print("Now at low sensitivity. ");
       //Serial.println(i);
     }
-    if(i==0)
-    {
+    if(i==0)    {
       digitalWrite(TSL_S0, HIGH);  // S0 HIGH and S1 LOW = 1x sensitivity
       digitalWrite(TSL_S1, LOW);
     }
-    if(i==1)
-    {
+    if(i==1)    {
       digitalWrite(TSL1_S0, HIGH);  // S0 HIGH and S1 LOW = 1x sensitivity
       digitalWrite(TSL1_S1, LOW);
     }
     calcSensitivity[i] = 10;
     break;
   case 2:
-    if (calcSensitivity[i] != 100)
-    {
+    if (calcSensitivity[i] != 100)    {
       //Serial.print("Now at medim sensitivity. ");
       //Serial.println(i);
     }
-    if(i==0)
-    {
+    if(i==0)    {
       digitalWrite(TSL_S0, LOW);  // S0 LOW and S1 HIGH = 10x sensitivity
       digitalWrite(TSL_S1, HIGH);
     }
-    if(i==1)
-    {
+    if(i==1)    {
       digitalWrite(TSL1_S0, LOW);  // S0 LOW and S1 HIGH = 10x sensitivity
       digitalWrite(TSL1_S1, HIGH);
     }
     calcSensitivity[i] = 100;
     break;
   case 3:
-    if (calcSensitivity[i] != 1000)
-    {
+    if (calcSensitivity[i] != 1000)    {
       //Serial.print("Now at high sensitivity. ");
       //Serial.println(i);
     }
-    if(i==0)
-    {
+    if(i==0)    {
       digitalWrite(TSL_S0, HIGH);  // S0 HIGH and S1 HIGH = 100x sensitivity
       digitalWrite(TSL_S1, HIGH);
     }
-    if(i==1)
-    {
+    if(i==1)    {
       digitalWrite(TSL1_S0, HIGH);  // S0 HIGH and S1 HIGH = 100x sensitivity
       digitalWrite(TSL1_S1, HIGH);
     }
@@ -2155,19 +2029,14 @@ void sensitivity(uint8_t level, int i)
   {
   float delta;
   float h;
-
   sunPos sPos;
-  
   //now = rtc.now();
   float month2 = (float) now.month();
   float day = (float) now.day();
   float hour2 = (float) now.hour();
   float minute2 = (float) now.minute();
-  
-  
   float latitude1=latitude*pi/180;
    
-
   //START OF THE CODE THAT CALCULATES THE POSITION OF THE SUN
   float n = daynum(month2) + day;//NUMBER OF DAYS SINCE THE START OF THE YEAR. 
   delta = .409279 * sin(2 * pi * ((284 + n)/365.25));//SUN'S DECLINATION.
@@ -2281,7 +2150,6 @@ void sensitivity(uint8_t level, int i)
             float h_Array[10]={
             2.325,2.004,1.665,1.312,0.948,0.578,0.205,-0.167,-0.534,-0.893,};
             h = h_Array[day];}
-
 return h;
       }
       
@@ -2289,9 +2157,7 @@ return h;
 // convert analog output into actual voltage.
 //////////////////////////////////////////////
 
-inline float voltage(int analogPin, float volt, float gain)
-{
-  
+inline float voltage(int analogPin, float volt, float gain) {
   int v = analogRead(analogPin); 
   float vf = gain*volt*((float)v/(float)(TBits+1));  //rescale channel with max voltage
   return vf;
@@ -2302,11 +2168,9 @@ inline float voltage(int analogPin, float volt, float gain)
 // and converts them into actual voltage.
 /////////////////////////////////////////////////////////
 
-float avoltage(int analogPin, float Volt, float gain, int numAver)
-{
+float avoltage(int analogPin, float Volt, float gain, int numAver) {
   float vt=0.0;
-  for(int i = 0; i < numAver; ++i) 
-  {
+  for(int i = 0; i < numAver; ++i)   {
     float vf=voltage(analogPin,Volt, gain);
     vt += vf;
   }
@@ -2319,7 +2183,6 @@ float avoltage(int analogPin, float Volt, float gain, int numAver)
 /////////////////////////////////////////////////////
 
 #ifdef MULTIR
-
 void TRselect(int t1, int t2, int t3) {
 
   if(t1==0)
@@ -2339,7 +2202,6 @@ void TRselect(int t1, int t2, int t3) {
   else
     {analogWrite(TR3, HIGH);
     RAmpI = RAi[2];}     
-    
 }
 
   ///////////////////////////////////////////
@@ -2383,7 +2245,6 @@ void TRselect(int t1, int t2, int t3) {
   int ip=fp;
   for (int i=0; i<numCell; i++)
       {
-
       //V[i] = avoltage(ip, maxVolt, Vgain, avNum);
       //delay(2);
       
@@ -2397,7 +2258,6 @@ void TRselect(int t1, int t2, int t3) {
           {TRselect(0,1,0);
           Serial.println(" Using TR2 for amplification measurement");
           // Add new coefficient for the correct R value
-          
           }
          if(seq==1)
           {TRselect(0,0,1);
@@ -2428,7 +2288,6 @@ float TC()
   float tc=0.0;
   float V = avoltage(Tpin, maxVolt, 1, avNum);
   float R = (Rtf*V)/(maxVolt-V);
-
   float A = 3.354016e-3;
   float B = 2.993410e-4;
   float C = 2.135133e-6;
@@ -2440,7 +2299,6 @@ float TC()
   float logR3 = logR * logR * logR;
   float devT = -1.5;  //deviation from formula. Value for T up to 35C
   //float devT = -2;  //deviation from formula. Value for T from 35 to 50C
-
   tc= (1.0/(A+B*logR+C*logR2+D*logR3))-V*V*1000/(K*R)-273.3+devT;   //in K
   return tc;
 }
@@ -2486,13 +2344,11 @@ float currentRead(int iPin, float Volt, int polar, float RAmpI){
 #else  
   analogReference(DEFAULT);  //For any board other than the Arduino Due
 #endif
-
   return currentReadingmA;
 }
 
 
 void resetVOpAmp() {
-
   dacWrite(B10000000, B00000000);  // reset output voltage
   
   // set op amp negative terminal voltage to 0.027 V
@@ -2504,10 +2360,7 @@ void resetVOpAmp() {
   
   //set op amp negative terminal voltage to 1V 
   //int vOpAmp = dacWrite(B10010011, B11101000);
-  
-  
   dacWrite(B00000000, B00000000);  // reset DACa voltage
-
 }
 
 

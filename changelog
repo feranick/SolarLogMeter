@@ -1,3 +1,5 @@
+Version 4.2 - 20160517 - Automatic acquisition can be stopped and set to manual. Major code cleanup and bug fixes.
+
 Version 4.1 - 20160517 - Added ability to change from manual mode to Auto from serial display. Date/Time are now split into two separate columns.
 
 Version 4.0 - 20160513 - Current offset calibration can be now performed within Serial monitor and it is saved in SD card.

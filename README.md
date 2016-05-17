@@ -1,7 +1,7 @@
 SolarLogMeter
 ==============
 
-Current Version: 4.1 - 20160517
+Current Version: 4.2 - 20160517
 
 Arduino sketch for a Log Meter device for solar PV measurements.
 
@@ -21,6 +21,7 @@ Features
 - Automatically computes and saves sun position
 - Flexible activation/deactivation of used hardware.
 - Automatic current offset calibration to the specific hardware
+- Auto (time step) or Manual acquisiton mode, can be set from Serial monitor or SD config file.
 
 Requirements
 ============
