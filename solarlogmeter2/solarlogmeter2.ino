@@ -3,7 +3,7 @@
  
  SolarLogMeter (with weather measurements)						 
  		
- v. 4.0 - PV IV logging 
+ v. 4.1 - PV IV logging 
  2011-2016 - Nicola Ferralis - ferralis@mit.edu		
  
  With contribution from IVy: 
@@ -59,6 +59,11 @@
  need to be properly set according to the right thermistor.   
  
  5. SD Card:
+
+ - Arduino Ethernet shield: pin 4
+ - Adafruit SD shields and modules: pin 10 (also change MEGA_SOFT_SPI from 0 to 1) 
+ - Sparkfun SD shield: pin 8
+ 
  If using the the Adafruit Logging shield with an Arduino Mega (Only the MEGA),
  in the file: ~arduino/libraries/SD/src/utility/Sd2Card.h
  
@@ -138,7 +143,7 @@
 //--------------------------------------------------------------------------------
 // Change this to match your SD shield or module;
 // Arduino Ethernet shield: pin 4
-// Adafruit SD shields and modules: pin 10 (also change MEGA_SOFT_SPI from 0 to 1
+// Adafruit SD shields and modules: pin 10 (also change MEGA_SOFT_SPI from 0 to 1)
 // Sparkfun SD shield: pin 8
 //---------------------------------------------------------------------------------
 #define SDshield 10
@@ -188,7 +193,7 @@
 //------------------
 
 String nameProg = "SolarLogMeter";
-String versProg = "4.0 - 20160513";
+String versProg = "4.1exp - 20160516";
 String developer = "Nicola Ferralis - ferralis@mit.edu";
 char cfgFile[]="SLM.cfg";
 
@@ -679,28 +684,40 @@ void loop()
 
       // Perform offset in current correction measurement info (7)
       if(inSerial==55)  
-      { inSerial2 = 0;
-        Serial.println("---------------------------------------------------------");
+      {        Serial.println("---------------------------------------------------------");
         Serial.println("Collecting Single IV for calibration of offset current");
         Serial.println("WARNING: disconnect solar cell from circuit");
         Serial.println("Press 1 to continue the calibration");
         Serial.println("---------------------------------------------------------");
+        
+        ivSingle(true);
+        Serial.println("-------------------------------------------------------");
+        Serial.print("Current offset (mA): ");
+        Serial.println(currentOffset);
+        UpdatePref();
+        Serial.print("Current offset saved in configuration file: \"");
+        Serial.print(cfgFile);
+        Serial.println("\"");
+        Serial.println("You may now reconnect the solar cell.");
+        Serial.println("---------------------------------------------------------");
+        NowSerial();
+        serialMenu();
+      }      
 
-        //inSerial2=Serial.read(); 
-        //if(inSerial2==51) {
-          ivSingle(true);
-          Serial.println("-------------------------------------------------------");
-          Serial.print("Current offset (mA): ");
-          Serial.println(currentOffset);
-          UpdatePref();
-          Serial.print("Current offset saved in configuration file: \"");
-          Serial.print(cfgFile);
-          Serial.println("\"");
-          Serial.println("You may now reconnect the solar cell.");
-          Serial.println("---------------------------------------------------------");
-          NowSerial();
-          serialMenu();
-        //}
+
+      // Changing mode from MANUAL to AUTO.
+      if(inSerial==56)  
+      {
+        Serial.println("---------------------------------------------------------");
+        Serial.println("Changing mode from MANUAL to AUTO");
+        Serial.print("Preferences updated in configuration file: \"");
+        Serial.print(cfgFile);
+        Serial.println("\"");
+        Serial.println("AUTO Mode will start in 1 second");
+        delay(1000);
+        bootMode = 0;
+        UpdatePref();
+        Serial.println("---------------------------------------------------------");
       }      
 
       // Reset device (0)
@@ -771,7 +788,7 @@ void loop()
 #endif
 }
 
- else {
+ else {delay(100);
       Serial.println("Starting data logging into SD card...");
       sds = true;
       
@@ -788,6 +805,7 @@ void loop()
             Serial.println(" seconds");
             delay(restTime*1000);
           }
+
         }    
   }
 }
@@ -1165,7 +1183,7 @@ void serialMenu(){
   Serial.println("1: Collect single IV - 2: Collect sequence IV - 3: Stop sequence IV");
   Serial.println("4: Start writing data on SD - 5: Stop writing data on SD");
   Serial.println("6: Stamp loaction/time/date/solar info - 7: Current offset calibration");
-  Serial.println("0: Reset");
+  Serial.println("8: Change mode from Manual to Auto; 0: Reset");
   Serial.println("---------------------------------------------------------------------------");
 
   Serial.println();  
@@ -1186,10 +1204,10 @@ void writeDateSerial(){
   Serial.print(now.month(),DEC );
   Serial.print("/");
   Serial.print(now.day(), DEC);
-  //Serial.print("\"");
+  Serial.print("\"");
   //Serial.print(" ");     // for regular serial
-  //Serial.print(",\"");      // for csv 
-  Serial.print("-");
+  Serial.print(",\"");      // for csv 
+  //Serial.print("-");
   Serial.print(now.hour(),DEC);
   Serial.print(":");
   if(now.minute() < 10)
@@ -1224,9 +1242,9 @@ void writeDateSD(File dataFile){
   dataFile.print(now.month(), DEC);
   dataFile.print("/");
   dataFile.print(now.day(), DEC);
-  //dataFile.print("\"");
-  //dataFile.print(",\"");      // for csv
-  dataFile.print("-");
+  dataFile.print("\"");
+  dataFile.print(",\"");      // for csv
+  //dataFile.print("-");
   dataFile.print(now.hour(), DEC);
   dataFile.print(":");
   if(now.minute() < 10)
@@ -1256,11 +1274,11 @@ void writeIVSD(File dataFile, float V, float I, float Ic){
 
 void header(){  
   Serial.println();
-  Serial.print("\"#\",");
+  Serial.print("\"#\",\"Date\",");
   if(DST==0)
-    {Serial.print("\"Date-Time (ST)\"");}
+    {Serial.print("\"Time (ST)\"");}
   else 
-    {Serial.print("\"Date-Time (DST)\"");}
+    {Serial.print("\"Time (DST)\"");}
   for (int i=0; i<numCell; i++)
   {
     Serial.print(",\"V");
@@ -1294,11 +1312,11 @@ void headerSD(File dataFile){
   dataFile.print("\"Current offset:\",");
   dataFile.print(currentOffset);
   dataFile.println();
-  dataFile.print("\"#\",");
+  dataFile.print("\"#\",\"Date\",");
   if(DST==0)
-    {dataFile.print("\"Date-Time (ST)\"");}
+    {dataFile.print("\"Time (ST)\"");}
   else 
-    {dataFile.print("\"Date-Time (DST)\"");}
+    {dataFile.print("\"Time (DST)\"");}
   for (int i=0; i<numCell; i++)
   {
     dataFile.print(",\"V");

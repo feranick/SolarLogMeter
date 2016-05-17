@@ -1,3 +1,5 @@
+Version 4.1 - 20160517 - Added ability to change from manual mode to Auto from serial display. Date/Time are now split into two separate columns.
+
 Version 4.0 - 20160513 - Current offset calibration can be now performed within Serial monitor and it is saved in SD card.
 
 Version 3.8 - 20160510 - Updated documentation. Default acquisition time is now 5 minutes.
