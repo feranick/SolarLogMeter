@@ -1,4 +1,6 @@
-Version 4.2 - 20160517 - Removed external dependency to SLMtypes.h, now included directly in src.
+Version 4.3 - 20160525 - No changes. Reformatted using Arduino IDE Auto Format.
+
+Version 4.3 - 20160517 - Removed external dependency to SLMtypes.h, now included directly in src.
 
 Version 4.2 - 20160517 - Automatic acquisition can be stopped and set to manual. Major code cleanup and bug fixes.
 

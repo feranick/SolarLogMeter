@@ -1,7 +1,7 @@
 SolarLogMeter
 ==============
 
-Current Version: 4.3 - 20160517
+Current Version: 4.3 - 20160525
 
 Arduino sketch for a Log Meter device for solar PV measurements.
 
